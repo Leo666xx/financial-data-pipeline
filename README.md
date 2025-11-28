@@ -2,6 +2,26 @@
 
 A Flask-based financial data API for fetching and managing financial market data (such as forex exchange rates).
 
+## 🔐 Security - API Key Setup
+
+### ⚠️ Important: Never commit your API keys to Git!
+
+1. **Get your OpenAI API Key** from https://platform.openai.com/api/keys
+2. **Set it as an environment variable** (Windows):
+   ```powershell
+   setx OPENAI_API_KEY "sk-proj-your-actual-key"
+   ```
+3. **Restart PowerShell** for changes to take effect
+4. **Verify** the key is set:
+   ```powershell
+   echo $env:OPENAI_API_KEY
+   ```
+
+Alternatively, use `.env` file:
+1. Copy `.env.example` to `.env`
+2. Edit `.env` with your actual API key
+3. `.env` is in `.gitignore` and will never be committed
+
 ## 🎯 Features
 
 - 📊 **Price Query Interface** - Query the latest prices of financial assets by symbol
@@ -10,6 +30,8 @@ A Flask-based financial data API for fetching and managing financial market data
 - 🔄 **Automatic Symbol Mapping** - Support multiple symbol formats (e.g., `GBPUSD` automatically maps to `GBPUSD=X`)
 - 🔍 **Real-time Queries** - Support real-time queries for the latest price data
 - 📈 **Extensible Architecture** - Easy to add new data sources and interfaces
+- 🤖 **AI Market Analysis** - Automatic market summary using OpenAI GPT
+- 📉 **Technical Indicators** - 7-day and 30-day moving averages
 
 ## 📂 Project Structure
 
