@@ -1,15 +1,22 @@
 ﻿import dash
-from dash import dcc, html, Output, Input, State
+from dash import dcc, html, Output, Input, State, callback
 import requests
 import datetime
 import plotly.graph_objs as go
 import json
+import os
+from openai import OpenAI
 
 app = dash.Dash(__name__)
 
-# UI: symbol dropdown, graph, status
+# Initialize OpenAI client
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# UI: symbol dropdown, graph, status, AI summary
 app.layout = html.Div([
     html.H1("Financial Dashboard"),
+    
     html.Div([
         html.Label("Symbol:"),
         dcc.Dropdown(
@@ -28,10 +35,28 @@ app.layout = html.Div([
     # store holds list of {ts: ..., price: ...}
     dcc.Store(id='price-store', data=[]),
 
+    # store for AI summary
+    dcc.Store(id='summary-store', data=''),
+
     # poll every 5 seconds
     dcc.Interval(id='interval', interval=5*1000, n_intervals=0),
 
-    html.Div(id='status', style={'marginTop': '8px', 'color': '#666', 'fontSize': '12px'})
+    html.Div(id='status', style={'marginTop': '8px', 'color': '#666', 'fontSize': '12px'}),
+
+    html.Div([
+        html.H3("AI 市场点评", style={'marginTop': '24px'}),
+        html.Div(
+            id='ai-summary',
+            style={
+                'backgroundColor': '#f0f0f0',
+                'padding': '16px',
+                'borderRadius': '8px',
+                'lineHeight': '1.6',
+                'color': '#333',
+                'minHeight': '100px'
+            }
+        )
+    ], style={'marginTop': '20px'})
 ])
 
 
@@ -74,6 +99,110 @@ def calculate_ma(prices, window):
     for i in range(window - 1, len(prices)):
         ma.append(sum(prices[i - window + 1:i + 1]) / window)
     return ma
+
+
+def get_7day_data(data):
+    """Extract 7-day data from price store. Returns list of dicts or empty list."""
+    if not data:
+        return []
+    
+    # Get the last 7 days worth of data
+    # Assuming ~144 data points per day (86400 seconds / 600 seconds per point if polling every 10 min)
+    # But with 5-second intervals, it's much denser. Let's use a time-based approach instead.
+    now = datetime.datetime.utcnow()
+    seven_days_ago = now - datetime.timedelta(days=7)
+    
+    result = []
+    for d in data:
+        try:
+            ts = datetime.datetime.fromisoformat(d['ts'].replace('Z', '+00:00'))
+            if ts >= seven_days_ago:
+                result.append(d)
+        except Exception:
+            pass
+    
+    return result
+
+
+def generate_ai_summary(symbol: str, data: list) -> str:
+    """
+    Generate AI summary for the given symbol using 7-day data.
+    
+    Args:
+        symbol: Trading symbol (e.g., 'GBPUSD')
+        data: List of price data points with 'ts' and 'price' keys
+    
+    Returns:
+        Summary string or error message
+    """
+    if not client or not OPENAI_API_KEY:
+        return "⚠️ OpenAI API 未配置。请设置 OPENAI_API_KEY 环境变量。"
+    
+    if not data or len(data) < 2:
+        return "⚠️ 数据不足，无法生成总结。"
+    
+    try:
+        # Extract prices
+        prices = [d['price'] for d in data]
+        
+        # Calculate basic stats
+        current_price = prices[-1]
+        prev_price = prices[0]
+        min_price = min(prices)
+        max_price = max(prices)
+        price_change = current_price - prev_price
+        change_pct = (price_change / prev_price * 100) if prev_price != 0 else 0
+        
+        # Get MA values
+        ma7 = calculate_ma(prices, 7)
+        ma30 = calculate_ma(prices, 30)
+        
+        # Extract last valid MA values
+        last_ma7 = next((x for x in reversed(ma7) if x is not None), None)
+        last_ma30 = next((x for x in reversed(ma30) if x is not None), None)
+        
+        # Build data summary
+        data_summary = f"""
+交易对: {symbol}
+当前价格: {current_price:.6f}
+7天变化: {price_change:+.6f} ({change_pct:+.2f}%)
+7天最高: {max_price:.6f}
+7天最低: {min_price:.6f}
+7日MA: {last_ma7:.6f if last_ma7 else 'N/A'}
+30日MA: {last_ma30:.6f if last_ma30 else 'N/A'}
+数据点数: {len(data)}
+"""
+        
+        # Create prompt for GPT
+        prompt = f"""作为一位专业的金融分析师，请根据以下7天的交易数据，用中文生成一份市场点评（150-200字）。
+        
+{data_summary}
+
+请分析：
+1. 价格趋势（上升/下降/震荡）
+2. 与移动平均线的关系
+3. 可能的市场信号
+4. 简短的投资建议
+
+格式：直接输出分析意见，无需标题或编号。"""
+        
+        # Call GPT
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "你是一位专业的金融分析师。"},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300,
+            timeout=10.0
+        )
+        
+        summary = response.choices[0].message.content.strip()
+        return summary
+    
+    except Exception as e:
+        return f"❌ AI 总结生成失败: {str(e)}"
 
 
 @app.callback(
@@ -141,6 +270,31 @@ def update_graph(data, symbol):
         template='plotly_white'
     )
     return fig
+
+
+@app.callback(
+    Output('ai-summary', 'children'),
+    Input('price-store', 'data'),
+    State('symbol-dropdown', 'value'),
+    prevent_initial_call=False
+)
+def update_ai_summary(data, symbol):
+    """Update AI summary based on 7-day data."""
+    symbol = (symbol or 'GBPUSD').strip()
+    data = data or []
+    
+    if not data:
+        return "⏳ 等待数据加载..."
+    
+    # Extract 7-day data
+    seven_day_data = get_7day_data(data)
+    
+    if len(seven_day_data) < 2:
+        return f"⏳ 数据点不足 ({len(seven_day_data)}/2)，正在收集..."
+    
+    # Generate AI summary
+    summary = generate_ai_summary(symbol, seven_day_data)
+    return summary
 
 
 if __name__ == "__main__":
