@@ -5,13 +5,21 @@ import datetime
 import plotly.graph_objs as go
 import json
 import os
+from dotenv import load_dotenv
 from openai import OpenAI
+
+# Load environment variables from .env file
+env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(env_path)
 
 app = dash.Dash(__name__)
 
-# Initialize OpenAI client
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+# Initialize DeepSeek client (compatible with OpenAI SDK)
+DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
+client = OpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url="https://api.deepseek.com/v1"
+) if DEEPSEEK_API_KEY else None
 
 # UI: symbol dropdown, graph, status, AI summary
 app.layout = html.Div([
@@ -135,8 +143,8 @@ def generate_ai_summary(symbol: str, data: list) -> str:
     Returns:
         Summary string or error message
     """
-    if not client or not OPENAI_API_KEY:
-        return "⚠️ OpenAI API 未配置。请设置 OPENAI_API_KEY 环境变量。"
+    if not client or not DEEPSEEK_API_KEY:
+        return "⚠️ DeepSeek API 未配置。请设置 DEEPSEEK_API_KEY 环境变量。"
     
     if not data or len(data) < 2:
         return "⚠️ 数据不足，无法生成总结。"
@@ -186,9 +194,9 @@ def generate_ai_summary(symbol: str, data: list) -> str:
 
 格式：直接输出分析意见，无需标题或编号。"""
         
-        # Call GPT
+        # Call DeepSeek API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="deepseek-reasoner",
             messages=[
                 {"role": "system", "content": "你是一位专业的金融分析师。"},
                 {"role": "user", "content": prompt}

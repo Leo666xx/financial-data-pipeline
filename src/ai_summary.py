@@ -1,14 +1,24 @@
 """
 AI Summary Module
 ————————————————————————
-Generate market analysis summaries using OpenAI GPT API.
+Generate market analysis summaries using DeepSeek API.
 Reads 7-day data from database and returns English market summary.
 """
 
 import os
+import sys
 import sqlite3
+import requests
 from datetime import datetime, timedelta
-from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(env_path)
+
+# Configuration
+DEEPSEEK_API_KEY = os.getenv('OPENAI_API_KEY')  # Using same env var name for compatibility
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 # Initialize OpenAI client
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -137,9 +147,9 @@ Format: Provide a concise analysis without numbering or bullet points. Write as 
     return prompt
 
 
-def call_gpt_api(prompt: str) -> str:
+def call_deepseek_api(prompt: str) -> str:
     """
-    Call OpenAI GPT API to generate market analysis.
+    Call DeepSeek API to generate market analysis.
     
     Args:
         prompt: Analysis prompt
@@ -147,8 +157,8 @@ def call_gpt_api(prompt: str) -> str:
     Returns:
         Generated summary or error message
     """
-    if not client or not OPENAI_API_KEY:
-        return "❌ OpenAI API not configured. Please set OPENAI_API_KEY environment variable."
+    if not client or not DEEPSEEK_API_KEY:
+        return "❌ DeepSeek API not configured. Please set DEEPSEEK_API_KEY environment variable."
     
     try:
         response = client.chat.completions.create(
@@ -169,18 +179,18 @@ def call_gpt_api(prompt: str) -> str:
         )
         
         summary = response.choices[0].message.content.strip()
-        print(f"✓ GPT API call successful ({len(summary)} characters)")
+        print(f"✓ DeepSeek API call successful ({len(summary)} characters)")
         return summary
     
     except Exception as e:
-        error_msg = f"❌ GPT API error: {str(e)}"
+        error_msg = f"❌ DeepSeek API error: {str(e)}"
         print(error_msg)
         return error_msg
 
 
 def generate_ai_summary(symbol: str) -> dict:
     """
-    Complete workflow: Read 7-day data → Generate prompt → Call GPT → Return English summary.
+    Complete workflow: Read 7-day data → Generate prompt → Call DeepSeek → Return English summary.
     
     Args:
         symbol: Trading symbol (e.g., 'GBPUSD=X')
@@ -212,14 +222,14 @@ def generate_ai_summary(symbol: str) -> dict:
     print(f"   Range: ${stats['min_price']:.6f} - ${stats['max_price']:.6f}")
     print(f"   Change: {stats['change_pct']:+.2f}%")
     
-    # Step 3: Generate GPT prompt
-    print("Step 3️⃣ : Generating GPT prompt...")
+    # Step 3: Generate prompt
+    print("Step 3️⃣ : Generating analysis prompt...")
     prompt = generate_gpt_prompt(symbol, stats)
     print(f"   Prompt length: {len(prompt)} characters")
     
-    # Step 4: Call GPT API
-    print("Step 4️⃣ : Calling OpenAI GPT API...")
-    summary = call_gpt_api(prompt)
+    # Step 4: Call DeepSeek API
+    print("Step 4️⃣ : Calling DeepSeek API...")
+    summary = call_deepseek_api(prompt)
     
     # Step 5: Return result
     result = {
@@ -242,9 +252,9 @@ if __name__ == "__main__":
     print("=" * 60)
     
     # Ensure API key is set
-    if not OPENAI_API_KEY:
-        print("⚠️ OPENAI_API_KEY not set. Please configure it first.")
-        print("   Run: setx OPENAI_API_KEY 'your-key-here'")
+    if not DEEPSEEK_API_KEY:
+        print("⚠️ DEEPSEEK_API_KEY not set. Please configure it first.")
+        print("   Run: setx DEEPSEEK_API_KEY 'your-key-here'")
         exit(1)
     
     # Generate summaries for different symbols
