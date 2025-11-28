@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 
 DB_PATH = "data/market.db"
 
@@ -15,6 +15,17 @@ def init_db():
     """)
 
     conn.commit()
+    
+    # Create index for faster queries on symbol and timestamp
+    try:
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS idx_prices_symbol_ts 
+            ON prices(symbol, timestamp)
+        """)
+        conn.commit()
+    except Exception as e:
+        print(f"Index creation skipped or already exists: {e}")
+    
     conn.close()
 
 

@@ -65,5 +65,55 @@ def get_price():
 # ---------------------
 # 4. 启动 Flask
 # ---------------------
+@app.get("/history")
+def get_history():
+    # 返回历史价格点，参数：symbol, limit
+    symbol = request.args.get("symbol", "GBPUSD")
+    symbol = symbol.strip()
+    # support optional start/end ISO timestamps (inclusive)
+    start = request.args.get("start")
+    end = request.args.get("end")
+    limit = request.args.get("limit")
+    try:
+        limit = int(limit) if limit is not None else None
+    except Exception:
+        limit = None
+
+    db_symbol = symbol
+    if symbol == "GBPUSD":
+        db_symbol = "GBPUSD=X"
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    params = [db_symbol]
+    where_clause = "symbol=?"
+
+    if start and end:
+        where_clause += " AND timestamp BETWEEN ? AND ?"
+        params.extend([start, end])
+    elif start:
+        where_clause += " AND timestamp >= ?"
+        params.append(start)
+    elif end:
+        where_clause += " AND timestamp <= ?"
+        params.append(end)
+
+    # build query
+    query = f"SELECT timestamp, price FROM prices WHERE {where_clause} ORDER BY timestamp DESC"
+    if limit:
+        query += " LIMIT ?"
+        params.append(limit)
+
+    c.execute(query, tuple(params))
+    rows = c.fetchall()
+    conn.close()
+
+    # rows are newest-first; reverse to chronological order
+    rows = list(reversed(rows))
+
+    data = [{"timestamp": r[0], "price": r[1]} for r in rows]
+    return jsonify({"symbol": symbol, "data": data})
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
