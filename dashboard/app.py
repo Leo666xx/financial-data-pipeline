@@ -52,7 +52,23 @@ app.layout = html.Div([
     html.Div(id='status', style={'marginTop': '8px', 'color': '#666', 'fontSize': '12px'}),
 
     html.Div([
-        html.H3("AI 市场点评", style={'marginTop': '24px'}),
+        html.Div([
+            html.H3("AI 市场点评", style={'marginTop': '24px', 'display': 'inline-block', 'marginRight': '10px'}),
+            html.Button(
+                '🔄 刷新分析',
+                id='refresh-summary-btn',
+                n_clicks=0,
+                style={
+                    'padding': '8px 16px',
+                    'backgroundColor': '#4CAF50',
+                    'color': 'white',
+                    'border': 'none',
+                    'borderRadius': '4px',
+                    'cursor': 'pointer',
+                    'fontSize': '14px'
+                }
+            )
+        ]),
         html.Div(
             id='ai-summary',
             style={
@@ -61,7 +77,8 @@ app.layout = html.Div([
                 'borderRadius': '8px',
                 'lineHeight': '1.6',
                 'color': '#333',
-                'minHeight': '100px'
+                'minHeight': '100px',
+                'marginTop': '10px'
             }
         )
     ], style={'marginTop': '20px'})
@@ -280,19 +297,42 @@ def update_graph(data, symbol):
     return fig
 
 
+# Cache for AI summaries to avoid excessive API calls
+ai_summary_cache = {}
+ai_summary_last_update = {}
+
 @app.callback(
     Output('ai-summary', 'children'),
+    Input('refresh-summary-btn', 'n_clicks'),
     Input('price-store', 'data'),
     State('symbol-dropdown', 'value'),
     prevent_initial_call=False
 )
-def update_ai_summary(data, symbol):
-    """Update AI summary based on 7-day data."""
+def update_ai_summary(n_clicks, data, symbol):
+    """Update AI summary. Only calls API when refresh button is clicked or cache is old."""
     symbol = (symbol or 'GBPUSD').strip()
     data = data or []
     
     if not data:
-        return "⏳ 等待数据加载..."
+        return "⏳ 等待数据加载...（点击【🔄 刷新分析】生成 AI 点评）"
+    
+    # Check if we have cached summary
+    import time
+    current_time = time.time()
+    
+    # If button never clicked and no cache, show prompt
+    if n_clicks == 0 and symbol not in ai_summary_cache:
+        return "💡 点击【🔄 刷新分析】按钮生成 AI 市场点评（节省 API 用量）"
+    
+    # Check cache (30 minutes = 1800 seconds)
+    cache_duration = 1800  # 30 minutes
+    
+    if symbol in ai_summary_cache and n_clicks == 0:
+        last_update = ai_summary_last_update.get(symbol, 0)
+        if current_time - last_update < cache_duration:
+            # Return cached summary with timestamp
+            minutes_ago = int((current_time - last_update) / 60)
+            return f"{ai_summary_cache[symbol]}\n\n🕐 缓存分析（{minutes_ago} 分钟前生成）· 点击【🔄 刷新分析】更新"
     
     # Extract 7-day data
     seven_day_data = get_7day_data(data)
@@ -300,9 +340,14 @@ def update_ai_summary(data, symbol):
     if len(seven_day_data) < 2:
         return f"⏳ 数据点不足 ({len(seven_day_data)}/2)，正在收集..."
     
-    # Generate AI summary
+    # Generate AI summary (only when button clicked or cache expired)
     summary = generate_ai_summary(symbol, seven_day_data)
-    return summary
+    
+    # Update cache
+    ai_summary_cache[symbol] = summary
+    ai_summary_last_update[symbol] = current_time
+    
+    return f"{summary}\n\n🕐 刚刚更新"
 
 
 if __name__ == "__main__":
