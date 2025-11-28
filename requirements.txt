@@ -1,2 +1,5 @@
 Flask==2.3.3
-sqlite3-python==1.0.0
+yfinance==0.2.32
+pandas==2.1.0
+requests==2.31.0
+
