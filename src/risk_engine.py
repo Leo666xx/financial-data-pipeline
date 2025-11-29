@@ -141,9 +141,21 @@ class RiskEngine:
         Returns:
             异常检测结果
         """
+        # 增强数据保护：检查数据量是否足够
+        if len(prices) < 2:
+            return {
+                'has_anomaly': False,
+                'anomaly_count': 0,
+                'anomaly_indices': [],
+                'anomaly_prices': [],
+                'z_scores': [],
+                'latest_z_score': 0.0
+            }
+        
         if len(prices) < self.volatility_window:
             return {
                 'has_anomaly': False,
+                'anomaly_count': 0,
                 'anomaly_indices': [],
                 'anomaly_prices': [],
                 'z_scores': [],
@@ -161,7 +173,8 @@ class RiskEngine:
             mean = np.mean(window_data)
             std = np.std(window_data, ddof=1)
             
-            if std > 0:
+            # 保护：标准差为0或无效时跳过
+            if std > 0 and not np.isnan(std):
                 z_score = (prices_array[i] - mean) / std
                 z_scores.append(z_score)
                 
@@ -315,10 +328,11 @@ class RiskEngine:
         Returns:
             完整风险报告
         """
-        if len(prices) < 2:
+        # 增强数据保护：确保有足够数据点
+        if len(prices) < self.volatility_window:
             return {
                 'status': 'INSUFFICIENT_DATA',
-                'message': '数据不足，无法生成风险报告',
+                'message': f'Insufficient data for risk analysis. Need at least {self.volatility_window} data points, got {len(prices)}',
                 'data_points': len(prices),
                 'required_points': self.volatility_window
             }

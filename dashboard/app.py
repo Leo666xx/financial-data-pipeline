@@ -626,11 +626,11 @@ def update_risk_analysis(data, symbol):
     
     # 检查数据
     if not data or not isinstance(data, dict):
-        return {}, html.Div("等待数据加载...", style={'color': '#999'})
+        return {}, html.Div("Waiting for data...", style={'color': '#999'})
     
     historical = data.get('historical', [])
     if not historical or len(historical) < 20:
-        return {}, html.Div("数据不足，需要至少20个数据点进行风险分析", style={'color': '#999'})
+        return {}, html.Div("Insufficient data, at least 20 data points required for risk analysis", style={'color': '#999'})
     
     # 检查风险引擎是否可用
     if not RiskEngine:
@@ -676,13 +676,13 @@ def update_risk_analysis(data, symbol):
     risk_level = summary['risk_level']
     risk_color = risk_colors.get(risk_level, '#999')
     
-    # 风险等级中文
-    risk_level_zh = {
-        'MINIMAL': '极低',
-        'LOW': '低',
-        'MEDIUM': '中',
-        'HIGH': '高',
-        'CRITICAL': '严重'
+    # 风险等级英文（保持原文）
+    risk_level_en = {
+        'MINIMAL': 'Minimal',
+        'LOW': 'Low',
+        'MEDIUM': 'Medium',
+        'HIGH': 'High',
+        'CRITICAL': 'Critical'
     }
     
     panel_children = [
@@ -690,9 +690,9 @@ def update_risk_analysis(data, symbol):
         html.Div([
             html.Div([
                 html.Div([
-                    html.H4(f"风险等级: {risk_level_zh.get(risk_level, risk_level)}", 
+                    html.H4(f"Risk Level: {risk_level_en.get(risk_level, risk_level)}", 
                            style={'margin': '0', 'color': risk_color}),
-                    html.P(f"评分: {summary['risk_score']}/100", 
+                    html.P(f"Score: {summary['risk_score']}/100", 
                           style={'margin': '5px 0 0 0', 'fontSize': '14px', 'color': '#666'})
                 ], style={'flex': '1'}),
                 html.Div([
@@ -717,31 +717,31 @@ def update_risk_analysis(data, symbol):
             })
         ]),
         
-        # 波动率指标
+        # Volatility Metrics
         html.Div([
-            html.H4("📊 波动率分析", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
+            html.H4("📊 Volatility Analysis", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
             html.Div([
                 html.Div([
-                    html.Span("当前波动率: ", style={'color': '#666'}),
+                    html.Span("Current Volatility: ", style={'color': '#666'}),
                     html.Span(f"{volatility['current_volatility']:.4f}", 
                              style={'fontWeight': 'bold', 'color': '#ff5722' if volatility['is_high_volatility'] else '#333'})
                 ], style={'marginBottom': '8px'}),
                 html.Div([
-                    html.Span("平均波动率: ", style={'color': '#666'}),
+                    html.Span("Average Volatility: ", style={'color': '#666'}),
                     html.Span(f"{volatility['avg_volatility']:.4f}", style={'fontWeight': 'bold'})
                 ], style={'marginBottom': '8px'}),
                 html.Div([
-                    html.Span("波动率百分位: ", style={'color': '#666'}),
+                    html.Span("Volatility Percentile: ", style={'color': '#666'}),
                     html.Span(f"{volatility['volatility_percentile']:.1f}%", style={'fontWeight': 'bold'}),
                     html.Span(
-                        " 🔥 高波动" if volatility['volatility_percentile'] > 80 else "",
+                        " 🔥 High" if volatility['volatility_percentile'] > 80 else "",
                         style={'color': '#f44336', 'marginLeft': '8px'}
                     )
                 ], style={'marginBottom': '8px'}),
                 html.Div([
-                    html.Span("状态: ", style={'color': '#666'}),
+                    html.Span("Status: ", style={'color': '#666'}),
                     html.Span(
-                        "⚠️ 高波动率" if volatility['is_high_volatility'] else "✅ 正常",
+                        "⚠️ High Volatility" if volatility['is_high_volatility'] else "✅ Normal",
                         style={'fontWeight': 'bold', 'color': '#f44336' if volatility['is_high_volatility'] else '#4caf50'}
                     )
                 ])
@@ -753,29 +753,29 @@ def update_risk_analysis(data, symbol):
             })
         ], style={'marginBottom': '16px'}),
         
-        # 异常检测
+        # Anomaly Detection
         html.Div([
-            html.H4("🔍 异常检测", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
+            html.H4("🔍 Anomaly Detection", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
             html.Div([
                 html.Div([
-                    html.Span("异常点数量: ", style={'color': '#666'}),
+                    html.Span("Anomaly Count: ", style={'color': '#666'}),
                     html.Span(
                         f"{anomalies['count']}", 
                         style={'fontWeight': 'bold', 'color': '#f44336' if anomalies['count'] > 0 else '#4caf50'}
                     )
                 ], style={'marginBottom': '8px'}),
                 html.Div([
-                    html.Span("最新Z-score: ", style={'color': '#666'}),
+                    html.Span("Latest Z-score: ", style={'color': '#666'}),
                     html.Span(f"{anomalies['latest_z_score']:.2f}", style={'fontWeight': 'bold'}),
                     html.Span(
-                        " ⚠️ 异常" if abs(anomalies['latest_z_score']) > 2.5 else " ✅ 正常",
+                        " ⚠️ Anomaly" if abs(anomalies['latest_z_score']) > 2.5 else " ✅ Normal",
                         style={'marginLeft': '8px', 'color': '#f44336' if abs(anomalies['latest_z_score']) > 2.5 else '#4caf50'}
                     )
                 ], style={'marginBottom': '8px'}),
                 html.Div([
-                    html.Span("状态: ", style={'color': '#666'}),
+                    html.Span("Status: ", style={'color': '#666'}),
                     html.Span(
-                        "🚨 检测到异常" if anomalies['detected'] else "✅ 无异常",
+                        "🚨 Anomaly Detected" if anomalies['detected'] else "✅ No Anomaly",
                         style={'fontWeight': 'bold', 'color': '#f44336' if anomalies['detected'] else '#4caf50'}
                     )
                 ])
@@ -787,9 +787,9 @@ def update_risk_analysis(data, symbol):
             })
         ], style={'marginBottom': '16px'}),
         
-        # 风险信号
+        # Risk Signals
         html.Div([
-            html.H4(f"⚠️ 风险信号 ({len(signals)} 个)", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
+            html.H4(f"⚠️ Risk Signals ({len(signals)})", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
             html.Div([
                 html.Div([
                     html.Div([
@@ -813,19 +813,19 @@ def update_risk_analysis(data, symbol):
                 })
                 for s in signals
             ]) if signals else html.Div(
-                "✅ 无风险信号，市场状况良好",
+                "✅ No risk signals, market condition is good",
                 style={'padding': '12px', 'backgroundColor': '#e8f5e9', 'borderRadius': '4px', 'color': '#4caf50'}
             )
         ], style={'marginBottom': '16px'}),
         
-        # 风险因素
+        # Risk Factors
         html.Div([
-            html.H4("📋 风险因素", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
+            html.H4("📋 Risk Factors", style={'margin': '0 0 12px 0', 'fontSize': '16px'}),
             html.Div([
                 html.Div(f"• {factor}", style={'marginBottom': '6px', 'fontSize': '14px'})
                 for factor in report['risk_factors']
             ]) if report['risk_factors'] else html.Div(
-                "✅ 未发现显著风险因素",
+                "✅ No significant risk factors detected",
                 style={'color': '#4caf50', 'fontSize': '14px'}
             )
         ], style={
