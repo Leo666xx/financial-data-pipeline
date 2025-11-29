@@ -7,8 +7,9 @@
 - 📊 **K线数据生成** - 每5秒采集tick数据，自动生成5分钟K线（OHLC）
 - 📈 **技术指标** - MA7/MA30移动平均线，自动计算并可视化
 - 🤖 **AI市场分析** - 集成DeepSeek API，生成中文市场点评
+- 🛡️ **风险引擎** - 实时监控市场风险，滚动标准差异常检测，波动率分析
 - 🎨 **交互式图表** - Plotly可视化，支持3个交易品种（GBPUSD/EURUSD/BTCUSD）
-- 🛡️ **数据质量控制** - 异常值过滤，确保图表清晰无噪音
+- 🔍 **数据质量控制** - 异常值过滤，确保图表清晰无噪音
 - 🚀 **一键启动** - 桌面快捷方式，自动启动完整系统
 
 ## 📸 系统展示
@@ -18,6 +19,13 @@
 - MA7移动平均（橙色虚线）：7日短期趋势
 - MA30移动平均（红色点线）：30日长期趋势
 - 最新实时点（绿色星标）：当前市场价格
+
+**🛡️ 风险监控面板：**
+- 风险等级评估：极低/低/中/高/严重（5级评分系统）
+- 波动率分析：当前波动率、平均波动率、百分位排名
+- 异常检测：基于滚动标准差的Z-score异常检测
+- 风险信号：自动生成风险警告和操作建议
+- 风险因素：实时汇总影响市场的风险因素
 
 **支持的交易品种：**
 - GBP/USD（英镑/美元）
@@ -53,8 +61,9 @@ Tick数据采集(5秒/次) → K线生成(5分钟/根) → SQLite存储 → Flas
 
 **核心模块：**
 - `kline_generator.py` - K线生成器，采集tick并生成OHLC数据
+- `risk_engine.py` - 风险引擎，波动率分析和异常检测
 - `api.py` - Flask REST API，提供历史数据和实时价格查询
-- `dashboard/app.py` - Dash交互式前端，图表展示和AI分析
+- `dashboard/app.py` - Dash交互式前端，图表展示、AI分析和风险监控
 - `database.py` - SQLite数据库操作，包含异常值过滤
 - `fetch_data.py` - yfinance数据源接口（支持模拟数据备选）
 - `ai_summary.py` - AI市场分析，调用DeepSeek API
@@ -66,6 +75,7 @@ Tick数据采集(5秒/次) → K线生成(5分钟/根) → SQLite存储 → Flas
 financial-data-pipeline/
 ├── src/
 │   ├── kline_generator.py   # K线生成器（核心模块）
+│   ├── risk_engine.py       # 风险引擎（波动率+异常检测）
 │   ├── api.py               # Flask REST API
 │   ├── database.py          # SQLite数据库操作 + 异常值过滤
 │   ├── fetch_data.py        # yfinance数据源（含模拟数据备选）
@@ -78,6 +88,7 @@ financial-data-pipeline/
 │   └── ai_usage.json        # AI API使用记录
 ├── fill_history.py          # 历史数据填充工具
 ├── fill_history.ps1         # 批量填充脚本
+├── test_risk.py             # 风险分析测试工具
 ├── start_all.ps1            # 一键启动脚本
 ├── stop_all.ps1             # 停止所有服务
 ├── clean_database.ps1       # 数据库清理工具
@@ -209,6 +220,59 @@ python fill_history.py --symbol GBPUSD --bars 300
 
 详细说明请参考 [KLINE_GUIDE.md](KLINE_GUIDE.md)
 
+### 🛡️ 风险引擎 (Risk Engine)
+
+**核心功能：**
+1. **滚动标准差异常检测** - 基于20周期滚动窗口，检测价格异常波动
+2. **波动率分析** - 计算当前波动率、平均波动率、百分位排名
+3. **Z-score异常检测** - 标准化价格偏离度，阈值2.5倍标准差
+4. **风险等级评估** - 5级评分系统（极低/低/中/高/严重）
+5. **风险信号生成** - 自动生成风险警告和操作建议
+
+**风险指标：**
+- **风险评分**：0-100分综合评分
+  - 0-10: 极低风险 🟢
+  - 10-30: 低风险 🟡
+  - 30-50: 中等风险 🟠
+  - 50-70: 高风险 🔴
+  - 70+: 严重风险 🚨
+
+- **波动率分析**：
+  - 当前波动率（基于收益率标准差）
+  - 历史平均波动率
+  - 波动率百分位（在历史分布中的位置）
+  - 高波动率警告（阈值：1.5%）
+
+- **异常检测**：
+  - Z-score偏离度（标准化偏离指标）
+  - 异常点计数（超过2.5倍标准差）
+  - 异常价格列表
+
+**使用风险引擎：**
+
+```python
+# 方法1：使用命令行工具
+python test_risk.py --symbol GBPUSD
+
+# 方法2：对比多个品种
+python test_risk.py --compare
+
+# 方法3：在代码中使用
+from src.risk_engine import RiskEngine, analyze_risk
+
+prices = [1.27, 1.271, 1.269, ...]  # 价格序列
+report = analyze_risk(prices, symbol='GBPUSD')
+
+print(f"风险等级: {report['summary']['risk_level']}")
+print(f"风险评分: {report['summary']['risk_score']}/100")
+```
+
+**Dashboard集成：**
+- Dashboard自动实时显示风险监控面板
+- 每次刷新数据时自动更新风险分析
+- 彩色编码：绿色（安全）→ 黄色（注意）→ 橙色（警告）→ 红色（危险）
+- 风险信号自动提示操作建议
+
 ## 📡 API Documentation
 
 ### 1. 健康检查
@@ -337,6 +401,50 @@ python fill_history.py --symbol GBPUSD --bars 300
 
 # 使用模拟数据
 python fill_history.py --symbol GBPUSD --bars 300 --simulated
+```
+
+**6. 风险引擎 (`test_risk.py`)**
+```python
+# 分析单个品种风险
+python test_risk.py --symbol GBPUSD
+
+# 对比所有品种风险
+python test_risk.py --compare
+
+# 限制数据量（加速分析）
+python test_risk.py --symbol EURUSD --limit 100
+```
+
+**风险引擎输出示例：**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 风险分析报告 - GBPUSD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛡️ 风险摘要:
+  • 风险等级: MEDIUM (中等风险)
+  • 风险评分: 39/100
+  • 分析时间: 2025-01-16 10:30:45
+
+📈 波动率分析:
+  • 当前波动率: 0.0011 (0.11%)
+  • 平均波动率: 0.0010 (0.10%)
+  • 波动率百分位: 55% (历史中等水平)
+  • 高波动率警告: 否
+
+🔍 异常检测:
+  • Z-score偏离度: 1.23倍标准差
+  • 异常点数量: 5个 (1.67%)
+  • 检测到异常: 是
+
+⚠️ 风险信号:
+  1. [PRICE_ANOMALY] 价格偏离: Z-score=1.23 → 建议: 监控价格走势
+  2. [HIGH_VOLATILITY] 波动率上升 → 建议: 降低仓位
+
+🎯 综合建议:
+  • 中等风险等级,建议谨慎交易
+  • 波动率处于正常水平
+  • 检测到5个异常价格点,建议监控
 ```
 
 ## 🎯 已完成功能
