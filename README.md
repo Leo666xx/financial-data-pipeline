@@ -1,36 +1,38 @@
 # Financial Data Pipeline
 
-一个完整的金融数据分析系统，包含实时数据采集、K线生成、技术指标计算和AI市场分析。
+A comprehensive financial data analysis system with real-time data collection, K-line generation, technical indicators, and AI-powered market analysis.
 
-## ✨ 核心特性
+## ✨ Core Features
 
-- 📊 **K线数据生成** - 每5秒采集tick数据，自动生成5分钟K线（OHLC）
-- 📈 **技术指标** - MA7/MA30移动平均线，自动计算并可视化
-- 🤖 **AI市场分析** - 集成DeepSeek API，生成中文市场点评
-- 🛡️ **风险引擎** - 实时监控市场风险，滚动标准差异常检测，波动率分析
-- 🎨 **交互式图表** - Plotly可视化，支持3个交易品种（GBPUSD/EURUSD/BTCUSD）
-- 🔍 **数据质量控制** - 异常值过滤，确保图表清晰无噪音
-- 🚀 **一键启动** - 桌面快捷方式，自动启动完整系统
+- 📊 **K-Line Generation** - Collects tick data every 5 seconds, automatically generates 5-minute OHLC candlesticks
+- 📈 **Technical Indicators** - MA7/MA30 moving averages with automatic calculation and visualization
+- 🤖 **AI Market Analysis** - Integrated DeepSeek API for intelligent market commentary
+- 🛡️ **Risk Engine** - Real-time market risk monitoring with rolling standard deviation anomaly detection and volatility analysis
+- 🎨 **Interactive Charts** - Plotly visualization supporting 3 trading pairs (GBPUSD/EURUSD/BTCUSD)
+- 🔍 **Data Quality Control** - Anomaly filtering to ensure clean, noise-free charts
+- 🚀 **One-Click Launch** - Desktop shortcut for automatic system startup
+- 🚨 **Risk Alert System** - Dynamic alert banners for high-risk scenarios with real-time notifications
 
-## 📸 系统展示
+## 📸 System Overview
 
-**实时K线图表：**
-- 历史趋势线（蓝色）：300条5分钟K线数据
-- MA7移动平均（橙色虚线）：7日短期趋势
-- MA30移动平均（红色点线）：30日长期趋势
-- 最新实时点（绿色星标）：当前市场价格
+**Real-Time K-Line Charts:**
+- Historical trend line (blue): 300 5-minute K-line data points
+- MA7 moving average (orange dashed): 7-day short-term trend
+- MA30 moving average (red dotted): 30-day long-term trend
+- Latest real-time point (green star): current market price
 
-**🛡️ 风险监控面板：**
-- 风险等级评估：极低/低/中/高/严重（5级评分系统）
-- 波动率分析：当前波动率、平均波动率、百分位排名
-- 异常检测：基于滚动标准差的Z-score异常检测
-- 风险信号：自动生成风险警告和操作建议
-- 风险因素：实时汇总影响市场的风险因素
+**🛡️ Risk Monitor Panel:**
+- Risk level assessment: Minimal/Low/Medium/High/Critical (5-level scoring system 0-100)
+- Volatility analysis: current volatility, average volatility, percentile ranking
+- Anomaly detection: Z-score based detection with rolling standard deviation (threshold 2.5σ)
+- Risk signals: automatic generation of risk warnings and trading recommendations
+- Risk factors: real-time summary of market-impacting risk factors
+- Alert banners: prominent warnings for medium, high, and critical risk levels
 
-**支持的交易品种：**
-- GBP/USD（英镑/美元）
-- EUR/USD（欧元/美元）
-- BTC/USD（比特币/美元）
+**Supported Trading Pairs:**
+- GBP/USD (British Pound / US Dollar)
+- EUR/USD (Euro / US Dollar)
+- BTC/USD (Bitcoin / US Dollar)
 
 ## 🔐 Security - API Key Setup
 
@@ -52,22 +54,22 @@ Alternatively, use a `.env` file:
 2. Edit `.env` with your actual API key
 3. `.env` is in `.gitignore` and will never be committed
 
-## 🎯 技术架构
+## 🎯 Technical Architecture
 
-**数据流：**
+**Data Flow:**
 ```
-Tick数据采集(5秒/次) → K线生成(5分钟/根) → SQLite存储 → Flask API → Dash可视化
+Tick Data Collection (every 5s) → K-line Generation (5-min OHLC) → SQLite Storage → Flask API → Dash Visualization
 ```
 
-**核心模块：**
-- `kline_generator.py` - K线生成器，采集tick并生成OHLC数据
-- `risk_engine.py` - 风险引擎，波动率分析和异常检测
-- `api.py` - Flask REST API，提供历史数据和实时价格查询
-- `dashboard/app.py` - Dash交互式前端，图表展示、AI分析和风险监控
-- `database.py` - SQLite数据库操作，包含异常值过滤
-- `fetch_data.py` - yfinance数据源接口（支持模拟数据备选）
-- `ai_summary.py` - AI市场分析，调用DeepSeek API
-- `ai_usage.py` - API使用率控制（每日限额+冷却时间）
+**Core Modules:**
+- `kline_generator.py` - K-line generator, collects ticks and generates OHLC data
+- `risk_engine.py` - Risk engine, volatility analysis and anomaly detection
+- `api.py` - Flask REST API, provides historical data and real-time price queries
+- `dashboard/app.py` - Dash interactive frontend, charts display, AI analysis, and risk monitoring
+- `database.py` - SQLite database operations with anomaly filtering
+- `fetch_data.py` - yfinance data source interface (with simulated data fallback)
+- `ai_summary.py` - AI market analysis, calls DeepSeek API
+- `ai_usage.py` - API usage rate control (daily limit + cooldown)
 
 ## 📂 项目结构
 
