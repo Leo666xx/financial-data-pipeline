@@ -77,7 +77,7 @@ app.layout = html.Div([
 
     # Manual refresh button for data
     html.Button(
-        '🔄 刷新数据',
+        '🔄 Refresh Data',
         id='refresh-data-btn',
         n_clicks=0,
         style={
@@ -94,9 +94,9 @@ app.layout = html.Div([
 
     html.Div([
         html.Div([
-            html.H3("AI 市场点评", style={'marginTop': '24px', 'display': 'inline-block', 'marginRight': '10px'}),
+            html.H3("AI Market Analysis", style={'marginTop': '24px', 'display': 'inline-block', 'marginRight': '10px'}),
             html.Button(
-                '🔄 刷新分析',
+                '🔄 Refresh Analysis',
                 id='refresh-summary-btn',
                 n_clicks=0,
                 style={
@@ -126,7 +126,7 @@ app.layout = html.Div([
 
     # Risk Engine Panel
     html.Div([
-        html.H3("🛡️ 风险监控", style={'marginTop': '24px', 'color': '#d32f2f'}),
+        html.H3("🛡️ Risk Monitor", style={'marginTop': '24px', 'color': '#d32f2f'}),
         html.Div(id='risk-panel', style={'marginTop': '10px'})
     ], style={'marginTop': '20px'})
 ])
@@ -299,10 +299,10 @@ def generate_ai_summary(symbol: str, data: list) -> str:
         Summary string or error message
     """
     if not client or not DEEPSEEK_API_KEY:
-        return "⚠️ DeepSeek API 未配置。请设置 DEEPSEEK_API_KEY 环境变量。"
+        return "⚠️ DeepSeek API not configured. Please set DEEPSEEK_API_KEY environment variable."
     
     if not data or len(data) < 2:
-        return "⚠️ 数据不足，无法生成总结。"
+        return "⚠️ Insufficient data to generate summary."
     
     try:
         # Extract prices
@@ -330,34 +330,34 @@ def generate_ai_summary(symbol: str, data: list) -> str:
         
         # Build data summary
         data_summary = f"""
-交易对: {symbol}
-当前价格: {current_price:.6f}
-7天变化: {price_change:+.6f} ({change_pct:+.2f}%)
-7天最高: {max_price:.6f}
-7天最低: {min_price:.6f}
-7日MA: {ma7_str}
-30日MA: {ma30_str}
-数据点数: {len(data)}
+Symbol: {symbol}
+Current Price: {current_price:.6f}
+7-Day Change: {price_change:+.6f} ({change_pct:+.2f}%)
+7-Day High: {max_price:.6f}
+7-Day Low: {min_price:.6f}
+7-Day MA: {ma7_str}
+30-Day MA: {ma30_str}
+Data Points: {len(data)}
 """
         
         # Create prompt for GPT
-        prompt = f"""作为一位专业的金融分析师，请根据以下7天的交易数据，用中文生成一份市场点评（150-200字）。
+        prompt = f"""As a professional financial analyst, generate a market commentary (150-200 words) based on the following 7-day trading data.
         
 {data_summary}
 
-请分析：
-1. 价格趋势（上升/下降/震荡）
-2. 与移动平均线的关系
-3. 可能的市场信号
-4. 简短的投资建议
+Please analyze:
+1. Price trend (upward/downward/sideways)
+2. Relationship with moving averages
+3. Potential market signals
+4. Brief investment recommendation
 
-格式：直接输出分析意见，无需标题或编号。"""
+Format: Direct analysis, no title or numbering."""
         
         # Call DeepSeek API
         response = client.chat.completions.create(
             model="deepseek-reasoner",
             messages=[
-                {"role": "system", "content": "你是一位专业的金融分析师。"},
+                {"role": "system", "content": "You are a professional financial analyst."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -373,15 +373,15 @@ def generate_ai_summary(symbol: str, data: list) -> str:
         
         # Provide user-friendly error messages
         if "402" in error_msg or "Insufficient Balance" in error_msg:
-            return "💳 DeepSeek 账户余额不足。请访问 https://platform.deepseek.com 充值后再试。"
+            return "💳 Insufficient DeepSeek account balance. Please visit https://platform.deepseek.com to recharge."
         elif "401" in error_msg or "Unauthorized" in error_msg:
-            return "🔑 API 密钥无效。请检查 DEEPSEEK_API_KEY 环境变量配置。"
+            return "🔑 Invalid API key. Please check DEEPSEEK_API_KEY environment variable."
         elif "429" in error_msg or "rate" in error_msg.lower():
-            return "⏱️ API 调用频率过高，请稍后再试。"
+            return "⏱️ API rate limit exceeded, please try again later."
         elif "timeout" in error_msg.lower():
-            return "⏰ API 请求超时，请检查网络连接后重试。"
+            return "⏰ API request timeout, please check network connection and retry."
         else:
-            return f"❌ AI 总结生成失败: {error_msg}"
+            return f"❌ AI summary generation failed: {error_msg}"
 
 
 @app.callback(
@@ -546,7 +546,7 @@ def update_ai_summary(n_clicks, data, symbol):
     data = data or []
     
     if not data:
-        return "⏳ 等待数据加载...（点击【🔄 刷新分析】生成 AI 点评）"
+        return "⏳ Waiting for data... (Click [🔄 Refresh Analysis] to generate AI commentary)"
     
     # Check if we have cached summary
     import time
@@ -554,7 +554,7 @@ def update_ai_summary(n_clicks, data, symbol):
     
     # If button never clicked and no cache, show prompt
     if n_clicks == 0 and symbol not in ai_summary_cache:
-        return "💡 点击【🔄 刷新分析】按钮生成 AI 市场点评（节省 API 用量）"
+        return "💡 Click [🔄 Refresh Analysis] button to generate AI market commentary (saves API usage)"
     
     # Check cache (30 minutes = 1800 seconds)
     cache_duration = 1800  # 30 minutes
@@ -564,13 +564,13 @@ def update_ai_summary(n_clicks, data, symbol):
         if current_time - last_update < cache_duration:
             # Return cached summary with timestamp
             minutes_ago = int((current_time - last_update) / 60)
-            return f"{ai_summary_cache[symbol]}\n\n🕐 缓存分析（{minutes_ago} 分钟前生成）· 点击【🔄 刷新分析】更新"
+            return f"{ai_summary_cache[symbol]}\n\n🕐 Cached analysis (generated {minutes_ago} min ago) · Click [🔄 Refresh Analysis] to update"
     
     # Extract 7-day data
     seven_day_data = get_7day_data(data)
     
     if len(seven_day_data) < 2:
-        return f"⏳ 数据点不足 ({len(seven_day_data)}/2)，正在收集..."
+        return f"⏳ Insufficient data points ({len(seven_day_data)}/2), collecting..."
     
     # Rate-limiting: check allowance before calling API
     allowed, reason, wait = (True, "ok", 0)
@@ -585,17 +585,17 @@ def update_ai_summary(n_clicks, data, symbol):
         if symbol in ai_summary_cache:
             if reason == "daily_cap":
                 hrs = max(1, wait // 3600)
-                return f"{ai_summary_cache[symbol]}\n\n⛔ 今日 AI 次数已达上限。约 {hrs} 小时后可再刷新。"
+                return f"{ai_summary_cache[symbol]}\n\n⛔ Daily AI limit reached. Can refresh in ~{hrs} hour(s)."
             else:
                 mins = max(1, wait // 60)
-                return f"{ai_summary_cache[symbol]}\n\n⏳ 冷却中（约 {mins} 分钟后可再刷新）。"
+                return f"{ai_summary_cache[symbol]}\n\n⏳ Cooldown period (~{mins} min until next refresh)."
         else:
             if reason == "daily_cap":
                 hrs = max(1, wait // 3600)
-                return f"⛔ 今日 AI 调用次数已用完。请约 {hrs} 小时后再试。"
+                return f"⛔ Daily AI calls exhausted. Please try again in ~{hrs} hour(s)."
             else:
                 mins = max(1, wait // 60)
-                return f"⏳ 冷却中，请约 {mins} 分钟后再试。"
+                return f"⏳ Cooldown period, please try again in ~{mins} min."
 
     # Generate AI summary (only when button clicked or cache expired)
     summary = generate_ai_summary(symbol, seven_day_data)
@@ -611,7 +611,7 @@ def update_ai_summary(n_clicks, data, symbol):
     ai_summary_cache[symbol] = summary
     ai_summary_last_update[symbol] = current_time
     
-    return f"{summary}\n\n🕐 刚刚更新"
+    return f"{summary}\n\n🕐 Just updated"
 
 
 @app.callback(
