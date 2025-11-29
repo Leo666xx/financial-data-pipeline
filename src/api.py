@@ -33,10 +33,8 @@ def get_price():
     print(">>> symbol from request =", repr(symbol))  # 调试
     print(">>> API 收到的 symbol =", symbol)
     
-    # 如果用户输入的是 GBPUSD，则映射到数据库中的 GBPUSD=X
+    # 直接使用原始符号（数据库中存储的是 GBPUSD, EURUSD, BTCUSD）
     db_symbol = symbol
-    if symbol == "GBPUSD":
-        db_symbol = "GBPUSD=X"
     
     # 连接数据库
     conn = sqlite3.connect(DB_PATH)
@@ -79,9 +77,8 @@ def get_history():
     except Exception:
         limit = None
 
+    # 直接使用原始符号（数据库中存储的是 GBPUSD, EURUSD, BTCUSD）
     db_symbol = symbol
-    if symbol == "GBPUSD":
-        db_symbol = "GBPUSD=X"
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
