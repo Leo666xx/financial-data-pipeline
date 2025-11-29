@@ -25,6 +25,42 @@ load_dotenv(env_path)
 
 app = dash.Dash(__name__)
 
+# Add custom CSS for animations
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.85; }
+            }
+            @keyframes borderPulse {
+                0%, 100% { box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3); }
+                50% { box-shadow: 0 6px 20px rgba(211, 47, 47, 0.6); }
+            }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+                20%, 40%, 60%, 80% { transform: translateX(2px); }
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
+
 # Initialize DeepSeek client (compatible with OpenAI SDK)
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
 client = OpenAI(
@@ -72,6 +108,9 @@ app.layout = html.Div([
 
     # Disabled auto-refresh for cleaner display
     # dcc.Interval(id='interval', interval=5*1000, n_intervals=0),
+
+    # Risk Alert Banner (dynamic)
+    html.Div(id='risk-alert-banner', style={'marginTop': '12px'}),
 
     html.Div(id='status', style={'marginTop': '8px', 'color': '#666', 'fontSize': '12px'}),
 
@@ -167,10 +206,10 @@ def resample_to_low_frequency(data: list, interval_minutes: int = 5):
     """
     Resample high-frequency data to low-frequency K-line (candlestick) data.
     
-    模拟真实 K 线生成逻辑：
-    1. 按固定时间间隔（如 5 分钟）划分区间
-    2. 每个区间内不断更新价格
-    3. 取该区间最后一个价格作为收盘价 (close)
+    Simulates real K-line generation logic:
+    1. Divide into fixed time intervals (e.g., 5 minutes)
+    2. Continuously update prices within each interval
+    3. Use the last price in the interval as close price
     
     Args:
         data: List of dicts with 'timestamp' and 'price' keys
@@ -398,7 +437,7 @@ def load_data(n_clicks, symbol):
     # Load raw historical data (more points to ensure good resampling)
     hist = fetch_history(symbol, limit=2000)
     if not hist:
-        return {'historical': [], 'latest': None}, f'无法加载 {symbol} 的历史数据'
+        return {'historical': [], 'latest': None}, f'Unable to load historical data for {symbol}'
     
     # Resample to low-frequency (5-minute candles) for clean trends
     resampled = resample_to_low_frequency(hist, interval_minutes=5)
@@ -422,10 +461,10 @@ def load_data(n_clicks, symbol):
             latest_point = {'ts': latest_ts, 'price': latest_price}
     
     update_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    status_msg = f'✓ 历史: {len(historical)} 点 (5分钟K线)'
+    status_msg = f'✓ Historical: {len(historical)} points (5-min K-line)'
     if latest_point:
-        status_msg += f' | 最新实时: {latest_point["price"]:.6f}'
-    status_msg += f' | 更新: {update_time} | {symbol}'
+        status_msg += f' | Latest: {latest_point["price"]:.6f}'
+    status_msg += f' | Updated: {update_time} | {symbol}'
     
     return {'historical': historical, 'latest': latest_point}, status_msg
 
@@ -441,7 +480,7 @@ def update_graph(data, symbol):
     # Handle new data structure
     if not data or not isinstance(data, dict):
         fig = go.Figure()
-        fig.update_layout(title=f'{symbol} - 等待数据加载...')
+        fig.update_layout(title=f'{symbol} - Waiting for data...')
         return fig
     
     historical = data.get('historical', [])
@@ -449,7 +488,7 @@ def update_graph(data, symbol):
     
     if not historical:
         fig = go.Figure()
-        fig.update_layout(title=f'{symbol} - 无历史数据')
+        fig.update_layout(title=f'{symbol} - No historical data')
         return fig
     
     # Extract historical data for plotting and MA calculation
@@ -468,7 +507,7 @@ def update_graph(data, symbol):
         x=hist_x, 
         y=hist_y, 
         mode='lines', 
-        name=f'{symbol} (历史)',
+        name=f'{symbol} (Historical)',
         line=dict(color='#1f77b4', width=2),
         hovertemplate='%{y:.6f}<extra></extra>'
     ))
@@ -499,12 +538,12 @@ def update_graph(data, symbol):
             x=[latest_point['ts']], 
             y=[latest_point['price']], 
             mode='markers+text',
-            name='最新报价',
+            name='Latest Quote',
             marker=dict(color='#2ca02c', size=12, symbol='star'),
             text=[f"{latest_point['price']:.6f}"],
             textposition="top center",
             textfont=dict(size=10, color='#2ca02c', family='Arial Black'),
-            hovertemplate='最新: %{y:.6f}<extra></extra>'
+            hovertemplate='Latest: %{y:.6f}<extra></extra>'
         ))
         title_suffix = f' + 最新点'
     else:
@@ -615,6 +654,106 @@ def update_ai_summary(n_clicks, data, symbol):
 
 
 @app.callback(
+    Output('risk-alert-banner', 'children'),
+    Input('risk-store', 'data'),
+    State('symbol-dropdown', 'value')
+)
+def update_risk_alert_banner(risk_data, symbol):
+    """Display prominent risk alert banner for high-risk situations"""
+    symbol = (symbol or 'GBPUSD').strip()
+    
+    if not risk_data or risk_data.get('status') != 'OK':
+        return None
+    
+    summary = risk_data.get('summary', {})
+    risk_level = summary.get('risk_level', 'UNKNOWN')
+    risk_score = summary.get('risk_score', 0)
+    signals = risk_data.get('signals', [])
+    
+    # Only show banner for MEDIUM, HIGH, or CRITICAL risk
+    if risk_level not in ['MEDIUM', 'HIGH', 'CRITICAL']:
+        return None
+    
+    # Banner styling based on risk level
+    banner_styles = {
+        'MEDIUM': {
+            'backgroundColor': '#fff3e0',
+            'borderLeft': '6px solid #ff9800',
+            'color': '#e65100',
+            'icon': '⚠️'
+        },
+        'HIGH': {
+            'backgroundColor': '#ffebee',
+            'borderLeft': '6px solid #f44336',
+            'color': '#c62828',
+            'icon': '🚨'
+        },
+        'CRITICAL': {
+            'backgroundColor': '#ffcdd2',
+            'borderLeft': '6px solid #b71c1c',
+            'color': '#b71c1c',
+            'icon': '🔴'
+        }
+    }
+    
+    style_config = banner_styles.get(risk_level, banner_styles['MEDIUM'])
+    
+    # Count critical signals
+    critical_count = sum(1 for s in signals if s.get('severity') == 'CRITICAL')
+    warning_count = sum(1 for s in signals if s.get('severity') == 'WARNING')
+    
+    # Build alert message
+    alert_title = f"{style_config['icon']} {risk_level.upper()} RISK DETECTED"
+    alert_details = []
+    
+    if critical_count > 0:
+        alert_details.append(f"{critical_count} critical signal(s)")
+    if warning_count > 0:
+        alert_details.append(f"{warning_count} warning(s)")
+    
+    alert_subtitle = f"{symbol} · Risk Score: {risk_score}/100"
+    if alert_details:
+        alert_subtitle += f" · {', '.join(alert_details)}"
+    
+    # Top 3 most important signals
+    priority_signals = sorted(signals, key=lambda x: 0 if x.get('severity') == 'CRITICAL' else 1)[:3]
+    
+    return html.Div([
+        html.Div([
+            html.Div([
+                html.H3(alert_title, style={
+                    'margin': '0 0 8px 0',
+                    'fontSize': '18px',
+                    'fontWeight': 'bold'
+                }),
+                html.P(alert_subtitle, style={
+                    'margin': '0 0 12px 0',
+                    'fontSize': '14px',
+                    'opacity': '0.9'
+                }),
+                html.Div([
+                    html.Div([
+                        html.Span(f"• {s['type']}: ", style={'fontWeight': 'bold', 'fontSize': '13px'}),
+                        html.Span(s['recommendation'], style={'fontSize': '13px'})
+                    ], style={'marginBottom': '6px'})
+                    for s in priority_signals
+                ]) if priority_signals else None
+            ])
+        ], style={
+            'padding': '16px 20px',
+            'backgroundColor': style_config['backgroundColor'],
+            'borderLeft': style_config['borderLeft'],
+            'borderRadius': '4px',
+            'color': style_config['color'],
+            'boxShadow': '0 2px 8px rgba(0,0,0,0.1)',
+            'animation': 'pulse 2s ease-in-out infinite'
+        })
+    ], style={
+        'marginBottom': '16px'
+    })
+
+
+@app.callback(
     Output('risk-store', 'data'),
     Output('risk-panel', 'children'),
     Input('price-store', 'data'),
@@ -713,7 +852,9 @@ def update_risk_analysis(data, symbol):
                 'backgroundColor': '#fff',
                 'border': f'2px solid {risk_color}',
                 'borderRadius': '8px',
-                'marginBottom': '16px'
+                'marginBottom': '16px',
+                'boxShadow': '0 4px 12px rgba(211, 47, 47, 0.3)' if risk_level in ['HIGH', 'CRITICAL'] else '0 2px 4px rgba(0,0,0,0.1)',
+                'animation': 'borderPulse 2s ease-in-out infinite' if risk_level in ['HIGH', 'CRITICAL'] else 'none'
             })
         ]),
         
