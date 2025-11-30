@@ -106,8 +106,8 @@ app.layout = html.Div([
     # store for risk data
     dcc.Store(id='risk-store', data={}),
 
-    # Disabled auto-refresh for cleaner display
-    # dcc.Interval(id='interval', interval=5*1000, n_intervals=0),
+    # Auto-refresh every 5 seconds
+    dcc.Interval(id='interval', interval=5*1000, n_intervals=0),
 
     # Risk Alert Banner (dynamic)
     html.Div(id='risk-alert-banner', style={'marginTop': '12px'}),
@@ -428,9 +428,10 @@ Format: Direct analysis, no title or numbering."""
     Output('status', 'children'),
     Input('refresh-data-btn', 'n_clicks'),
     Input('symbol-dropdown', 'value'),
+    Input('interval', 'n_intervals'),
     prevent_initial_call=False
 )
-def load_data(n_clicks, symbol):
+def load_data(n_clicks, symbol, n_intervals):
     """Load historical data + latest real-time point separately."""
     symbol = (symbol or 'GBPUSD').strip()
     

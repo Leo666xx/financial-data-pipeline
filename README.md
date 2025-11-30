@@ -34,9 +34,19 @@ A comprehensive financial data analysis system with real-time data collection, K
 - EUR/USD (Euro / US Dollar)
 - BTC/USD (Bitcoin / US Dollar)
 
-## 🔄 Auto-Update
+## 🔄 Auto-Update Features
 
-The system can automatically check for updates from GitHub and restart services.
+### Dashboard Real-Time Auto-Refresh
+The web dashboard automatically refreshes every 5 seconds to display:
+- Latest market data and price updates
+- Real-time K-line chart changes
+- Updated technical indicators (MA7/MA30)
+- Current risk assessment and alerts
+
+No manual refresh needed - just open the browser and watch live updates!
+
+### System Code Auto-Update (Optional)
+Automatically check for updates from GitHub and restart services.
 
 **One-time Setup:**
 ```powershell
