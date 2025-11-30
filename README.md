@@ -71,156 +71,160 @@ Tick Data Collection (every 5s) → K-line Generation (5-min OHLC) → SQLite St
 - `ai_summary.py` - AI market analysis, calls DeepSeek API
 - `ai_usage.py` - API usage rate control (daily limit + cooldown)
 
-## 📂 项目结构
+## 📂 Project Structure
 
 ```
 financial-data-pipeline/
 ├── src/
-│   ├── kline_generator.py   # K线生成器（核心模块）
-│   ├── risk_engine.py       # 风险引擎（波动率+异常检测）
+│   ├── kline_generator.py   # K-line generator (core module)
+│   ├── risk_engine.py       # Risk engine (volatility + anomaly detection)
 │   ├── api.py               # Flask REST API
-│   ├── database.py          # SQLite数据库操作 + 异常值过滤
-│   ├── fetch_data.py        # yfinance数据源（含模拟数据备选）
-│   ├── ai_summary.py        # AI市场分析
-│   └── ai_usage.py          # API使用率控制
+│   ├── database.py          # SQLite database operations + anomaly filtering
+│   ├── fetch_data.py        # yfinance data source (with simulated data fallback)
+│   ├── ai_summary.py        # AI market analysis
+│   └── ai_usage.py          # API usage rate control
 ├── dashboard/
-│   └── app.py               # Dash交互式前端
+│   └── app.py               # Dash interactive frontend
 ├── data/
-│   ├── market.db            # SQLite数据库
-│   └── ai_usage.json        # AI API使用记录
-├── fill_history.py          # 历史数据填充工具
-├── fill_history.ps1         # 批量填充脚本
-├── test_risk.py             # 风险分析测试工具
-├── start_all.ps1            # 一键启动脚本
-├── stop_all.ps1             # 停止所有服务
-├── clean_database.ps1       # 数据库清理工具
-├── create_desktop_shortcuts.ps1  # 创建桌面快捷方式
-├── requirements.txt         # Python依赖
-├── .env                     # 环境变量（本地配置，已忽略）
-└── KLINE_GUIDE.md          # K线生成器详细文档
+│   ├── market.db            # SQLite database
+│   └── ai_usage.json        # AI API usage tracking
+├── fill_history.py          # Historical data fill tool
+├── fill_history.ps1         # Batch fill script
+├── test_risk.py             # Risk analysis testing tool
+├── start_all.ps1            # One-click startup script
+├── stop_all.ps1             # Stop all services
+├── clean_database.ps1       # Database cleanup tool
+├── backup_database.ps1      # Database backup utility
+├── check_database.ps1       # Database health check
+├── create_desktop_shortcuts.ps1  # Create desktop shortcuts
+├── requirements.txt         # Python dependencies
+├── .env                     # Environment variables (local config, gitignored)
+├── DATABASE_GUIDE.md        # Database management guide
+├── KLINE_GUIDE.md          # K-line generator detailed documentation
+└── QUICK_REFERENCE.md      # Quick reference card
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Requirements
 
 - Python 3.10+
-- Windows PowerShell（推荐）
-- 网络连接（用于获取市场数据）
+- Windows PowerShell (recommended)
+- Network connection (for fetching market data)
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
 ```powershell
-# 克隆仓库
+# Clone repository
 git clone https://github.com/Leo666xx/financial-data-pipeline.git
 cd financial-data-pipeline
 
-# 创建虚拟环境
+# Create virtual environment
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
-创建 `.env` 文件（或使用 setx 命令）：
+Create a `.env` file (or use setx command):
 
 ```bash
-# DeepSeek API Key（用于AI市场分析）
+# DeepSeek API Key (for AI market analysis)
 DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 
-# 可选：API使用限制（不设置则使用默认值）
-MAX_CALLS_PER_DAY=20        # 每日最大调用次数
-SUMMARY_COOLDOWN_SEC=300    # 两次调用间隔（秒）
+# Optional: API usage limits (defaults will be used if not set)
+MAX_CALLS_PER_DAY=20        # Maximum daily API calls
+SUMMARY_COOLDOWN_SEC=300    # Cooldown between calls (seconds)
 ```
 
-**获取API Key：** https://platform.deepseek.com
+**Get API Key:** https://platform.deepseek.com
 
-### 3. 填充历史数据（推荐）
+### 3. Fill Historical Data (Recommended)
 
 ```powershell
-# 一键填充所有品种（每个300条K线）
+# Fill all symbols with one command (300 K-lines each)
 .\fill_history.ps1
 
-# 或单独填充某个品种
+# Or fill a specific symbol
 python fill_history.py --symbol GBPUSD --bars 300
 ```
 
-### 4. 创建桌面快捷方式
+### 4. Create Desktop Shortcuts
 
 ```powershell
 .\create_desktop_shortcuts.ps1
 ```
 
-### 5. 启动系统
+### 5. Start System
 
-**方式1：桌面快捷方式（推荐）**
-- 双击桌面上的 "Financial Dashboard" 快捷方式
+**Method 1: Desktop Shortcut (Recommended)**
+- Double-click the "Financial Dashboard" shortcut on desktop
 
-**方式2：命令行启动**
+**Method 2: Command Line**
 ```powershell
 .\start_all.ps1
 ```
 
-系统将自动：
-1. 清空旧数据
-2. 启动K线生成器（实时采集）
-3. 启动Flask API（后台）
-4. 启动Dashboard（后台）
-5. 打开浏览器（http://localhost:8050）
+The system will automatically:
+1. Check database status
+2. Start K-line generator (real-time collection)
+3. Start Flask API (background)
+4. Start Dashboard (background)
+5. Open browser (http://localhost:8050)
 
-### 6. 停止系统
+### 6. Stop System
 
 ```powershell
 .\stop_all.ps1
 ```
 
-## 📊 使用说明
+## 📊 Usage Guide
 
-### Dashboard 功能
+### Dashboard Features
 
-访问 http://localhost:8050 后，您可以：
+After accessing http://localhost:8050, you can:
 
-1. **选择交易品种**
-   - 下拉菜单选择：GBPUSD / EURUSD / BTCUSD
+1. **Select Trading Pair**
+   - Use dropdown menu: GBPUSD / EURUSD / BTCUSD
 
-2. **查看实时图表**
-   - 蓝色线：历史K线数据（5分钟间隔，最近300条）
-   - 橙色虚线：MA7移动平均（7日短期趋势）
-   - 红色点线：MA30移动平均（30日长期趋势）
-   - 绿色星标：最新实时价格
+2. **View Real-Time Charts**
+   - Blue line: Historical K-line data (5-minute interval, latest 300 bars)
+   - Orange dashed: MA7 moving average (7-day short-term trend)
+   - Red dotted: MA30 moving average (30-day long-term trend)
+   - Green star: Latest real-time price
 
-3. **刷新数据**
-   - 点击 "🔄 刷新数据" 按钮获取最新K线数据
+3. **Refresh Data**
+   - Click "Refresh Data" button to fetch latest K-line data
 
-4. **AI市场分析**
-   - 点击 "🔄 刷新分析" 按钮生成AI市场点评
-   - 自动分析最近7天价格趋势
-   - 中文输出，约150-200字
+4. **AI Market Analysis**
+   - Click "Refresh Analysis" button to generate AI market commentary
+   - Automatically analyzes recent 7-day price trends
+   - Output in English, approximately 150-200 words
 
-### 数据质量保证
+### Data Quality Assurance
 
-系统自动过滤异常数据：
-- **GBPUSD/EURUSD**: 只接受 0.5-3.0 范围内的价格
-- **BTCUSD**: 只接受 1000-1000000 范围内的价格
-- **所有品种**: 拒绝 None、0、负数
+System automatically filters anomalous data:
+- **GBPUSD/EURUSD**: Only accepts prices in range 0.5-3.0
+- **BTCUSD**: Only accepts prices in range 1000-1000000
+- **All symbols**: Rejects None, 0, negative values
 
-### K线生成逻辑
+### K-Line Generation Logic
 
-**采集流程：**
+**Collection Process:**
 ```
-每5秒采集一次tick → 累积到5分钟桶中 → 生成OHLC
+Collect tick every 5 seconds → Accumulate into 5-minute bucket → Generate OHLC
 ```
 
-**OHLC计算：**
-- Open（开盘价）: 该5分钟内第一个tick
-- High（最高价）: 该5分钟内最大tick
-- Low（最低价）: 该5分钟内最小tick
-- Close（收盘价）: 该5分钟内最后一个tick
+**OHLC Calculation:**
+- Open: First tick in the 5-minute period
+- High: Maximum tick in the 5-minute period
+- Low: Minimum tick in the 5-minute period
+- Close: Last tick in the 5-minute period
 
-详细说明请参考 [KLINE_GUIDE.md](KLINE_GUIDE.md)
+For detailed explanation, see [KLINE_GUIDE.md](KLINE_GUIDE.md)
 
 ### 🛡️ 风险引擎 (Risk Engine)
 
@@ -250,30 +254,30 @@ python fill_history.py --symbol GBPUSD --bars 300
   - 异常点计数（超过2.5倍标准差）
   - 异常价格列表
 
-**使用风险引擎：**
+**Using Risk Engine:**
 
 ```python
-# 方法1：使用命令行工具
+# Method 1: Use command-line tool
 python test_risk.py --symbol GBPUSD
 
-# 方法2：对比多个品种
+# Method 2: Compare multiple symbols
 python test_risk.py --compare
 
-# 方法3：在代码中使用
+# Method 3: Use in code
 from src.risk_engine import RiskEngine, analyze_risk
 
-prices = [1.27, 1.271, 1.269, ...]  # 价格序列
+prices = [1.27, 1.271, 1.269, ...]  # Price series
 report = analyze_risk(prices, symbol='GBPUSD')
 
-print(f"风险等级: {report['summary']['risk_level']}")
-print(f"风险评分: {report['summary']['risk_score']}/100")
+print(f"Risk Level: {report['summary']['risk_level']}")
+print(f"Risk Score: {report['summary']['risk_score']}/100")
 ```
 
-**Dashboard集成：**
-- Dashboard自动实时显示风险监控面板
-- 每次刷新数据时自动更新风险分析
-- 彩色编码：绿色（安全）→ 黄色（注意）→ 橙色（警告）→ 红色（危险）
-- 风险信号自动提示操作建议
+**Dashboard Integration:**
+- Dashboard automatically displays risk monitoring panel in real-time
+- Risk analysis updates automatically on data refresh
+- Color coding: Green (safe) → Yellow (caution) → Orange (warning) → Red (danger)
+- Risk signals automatically suggest trading recommendations
 
 ## 📡 API Documentation
 
@@ -328,9 +332,9 @@ GET http://localhost:5000/history?symbol=GBPUSD&limit=300
 }
 ```
 
-## 🗄️ 数据库结构
+## 🗄️ Database Structure
 
-### prices 表
+### prices Table
 
 ```sql
 CREATE TABLE prices (
@@ -344,17 +348,17 @@ CREATE INDEX idx_prices_symbol_timestamp
 ON prices(symbol, timestamp);
 ```
 
-**支持的交易品种:**
+**Supported Trading Pairs:**
 
-| 品种 | 符号 | 描述 |
-|------|------|------|
-| GBP/USD | `GBPUSD` | 英镑/美元 |
-| EUR/USD | `EURUSD` | 欧元/美元 |
-| BTC/USD | `BTCUSD` | 比特币/美元 |
+| Pair | Symbol | Description |
+|------|--------|-------------|
+| GBP/USD | `GBPUSD` | British Pound / US Dollar |
+| EUR/USD | `EURUSD` | Euro / US Dollar |
+| BTC/USD | `BTCUSD` | Bitcoin / US Dollar |
 
-## 🛠️ 开发指南
+## 🛠️ Development Guide
 
-### 技术栈
+### Tech Stack
 
 - **Flask 2.3+** - 轻量级Web框架
 - **Dash >=2.15** - 交互式数据可视化
@@ -364,148 +368,151 @@ ON prices(symbol, timestamp);
 - **OpenAI SDK** - DeepSeek API客户端
 - **python-dotenv** - 环境变量管理
 
-### 核心模块
+### Core Modules
 
-**1. K线生成器 (`kline_generator.py`)**
+**1. K-line Generator (`kline_generator.py`)**
 ```python
-# 启动K线生成器
+# Start K-line generator
 python src/kline_generator.py
 
-# 自定义参数
+# Custom parameters
 python src/kline_generator.py --symbols GBPUSD EURUSD --tick-interval 5 --kline-interval 300
 ```
 
 **2. Flask API (`api.py`)**
 ```python
-# 启动API服务器（默认端口5000）
+# Start API server (default port 5000)
 python src/api.py
 ```
 
 **3. Dashboard (`dashboard/app.py`)**
 ```python
-# 启动Dashboard（默认端口8050）
+# Start Dashboard (default port 8050)
 python dashboard/app.py
 ```
 
-**4. 数据库工具 (`database.py`)**
+**4. Database Tools (`database.py`)**
 ```python
-# 清空所有数据
+# Clear all data
 python src/database.py clear
 
-# 清理异常数据（保留正常数据）
+# Clean anomalous data (keep valid data)
 python src/database.py clean
 ```
 
-**5. 历史数据填充 (`fill_history.py`)**
+**5. Historical Data Fill (`fill_history.py`)**
 ```python
-# 填充300条历史K线
+# Fill 300 historical K-lines
 python fill_history.py --symbol GBPUSD --bars 300
 
-# 使用模拟数据
+# Use simulated data
 python fill_history.py --symbol GBPUSD --bars 300 --simulated
 ```
 
-**6. 风险引擎 (`test_risk.py`)**
+**6. Risk Engine (`test_risk.py`)**
 ```python
-# 分析单个品种风险
+# Analyze single symbol risk
 python test_risk.py --symbol GBPUSD
 
-# 对比所有品种风险
+# Compare all symbol risks
 python test_risk.py --compare
 
-# 限制数据量（加速分析）
+# Limit data points (faster analysis)
 python test_risk.py --symbol EURUSD --limit 100
 ```
 
-**风险引擎输出示例：**
+**Risk Engine Output Example:**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 风险分析报告 - GBPUSD
+📊 Risk Analysis Report - GBPUSD
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🛡️ 风险摘要:
-  • 风险等级: MEDIUM (中等风险)
-  • 风险评分: 39/100
-  • 分析时间: 2025-01-16 10:30:45
+🛡️ Risk Summary:
+  • Risk Level: MEDIUM
+  • Risk Score: 39/100
+  • Analysis Time: 2025-01-16 10:30:45
 
-📈 波动率分析:
-  • 当前波动率: 0.0011 (0.11%)
-  • 平均波动率: 0.0010 (0.10%)
-  • 波动率百分位: 55% (历史中等水平)
-  • 高波动率警告: 否
+📈 Volatility Analysis:
+  • Current Volatility: 0.0011 (0.11%)
+  • Average Volatility: 0.0010 (0.10%)
+  • Volatility Percentile: 55% (historical mid-level)
+  • High Volatility Alert: No
 
-🔍 异常检测:
-  • Z-score偏离度: 1.23倍标准差
-  • 异常点数量: 5个 (1.67%)
-  • 检测到异常: 是
+🔍 Anomaly Detection:
+  • Z-score Deviation: 1.23 standard deviations
+  • Anomaly Count: 5 points (1.67%)
+  • Anomalies Detected: Yes
 
-⚠️ 风险信号:
-  1. [PRICE_ANOMALY] 价格偏离: Z-score=1.23 → 建议: 监控价格走势
-  2. [HIGH_VOLATILITY] 波动率上升 → 建议: 降低仓位
+⚠️ Risk Signals:
+  1. [PRICE_ANOMALY] Price deviation: Z-score=1.23 → Advice: Monitor price movement
+  2. [HIGH_VOLATILITY] Volatility increase → Advice: Reduce position size
 
-🎯 综合建议:
-  • 中等风险等级,建议谨慎交易
-  • 波动率处于正常水平
-  • 检测到5个异常价格点,建议监控
+🎯 Overall Recommendation:
+  • Medium risk level, trade with caution
+  • Volatility at normal levels
+  • Detected 5 anomalous price points, recommend monitoring
 ```
 
-## 🎯 已完成功能
+## 🎯 Features Implemented
 
-### ✅ 核心功能
-- [x] K线生成器（tick采集 → OHLC生成）
-- [x] 异常值过滤（数据质量控制）
-- [x] Flask REST API（/price, /history端点）
-- [x] Dash交互式Dashboard
-- [x] Plotly图表可视化
-- [x] MA7/MA30技术指标
-- [x] AI市场分析（DeepSeek集成）
-- [x] API使用率控制（每日限额+冷却时间）
-- [x] SQLite数据持久化
-- [x] 历史数据填充工具
-- [x] 一键启动脚本
-- [x] 桌面快捷方式
+### ✅ Core Features
+- [x] K-line generator (tick collection → OHLC generation)
+- [x] Anomaly filtering (data quality control)
+- [x] Flask REST API (/price, /history endpoints)
+- [x] Dash interactive Dashboard
+- [x] Plotly chart visualization
+- [x] MA7/MA30 technical indicators
+- [x] AI market analysis (DeepSeek integration)
+- [x] API usage rate control (daily quota + cooldown)
+- [x] SQLite data persistence
+- [x] Historical data fill tool
+- [x] One-click startup script
+- [x] Desktop shortcuts
+- [x] Risk engine with volatility analysis
+- [x] Real-time risk monitoring dashboard
+- [x] Database backup and health check utilities
 
-### 🔄 可扩展功能
-- [ ] 支持更多K线周期（1分钟、15分钟、1小时）
-- [ ] 完整OHLC表（单独存储开高低收）
-- [ ] 更多技术指标（MACD、RSI、布林带）
-- [ ] 价格预警功能
-- [ ] 历史回测功能
-- [ ] Docker容器化部署
-- [ ] Web端用户认证
+### 🔄 Potential Extensions
+- [ ] Support more K-line periods (1min, 15min, 1hour)
+- [ ] Complete OHLC table (separate storage for OHLC)
+- [ ] More technical indicators (MACD, RSI, Bollinger Bands)
+- [ ] Price alert functionality
+- [ ] Historical backtesting
+- [ ] Docker containerized deployment
+- [ ] Web user authentication
 
-## ⚙️ 配置说明
+## ⚙️ Configuration
 
-### 环境变量
+### Environment Variables
 
-在项目根目录创建 `.env` 文件：
+Create a `.env` file in the project root:
 
 ```bash
-# DeepSeek API Key（必需）
+# DeepSeek API Key (required)
 DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 
-# AI使用限制（可选）
-MAX_CALLS_PER_DAY=20           # 每日最大调用次数（默认20）
-SUMMARY_COOLDOWN_SEC=300       # 两次调用间隔秒数（默认300=5分钟）
+# AI usage limits (optional)
+MAX_CALLS_PER_DAY=20           # Maximum daily API calls (default 20)
+SUMMARY_COOLDOWN_SEC=300       # Cooldown between calls in seconds (default 300=5min)
 ```
 
-### 配置参数说明
+### Configuration Parameters
 
-| 变量 | 必需 | 默认值 | 说明 |
-|------|------|--------|------|
-| `DEEPSEEK_API_KEY` | ✅ 是 | - | DeepSeek API密钥，从 https://platform.deepseek.com 获取 |
-| `MAX_CALLS_PER_DAY` | ⚪ 否 | `20` | 每日AI调用上限，UTC午夜重置 |
-| `SUMMARY_COOLDOWN_SEC` | ⚪ 否 | `300` | 连续调用最小间隔（秒），防止过度使用 |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DEEPSEEK_API_KEY` | ✅ Yes | - | DeepSeek API key from https://platform.deepseek.com |
+| `MAX_CALLS_PER_DAY` | ⚪ No | `20` | Daily AI call limit, resets at UTC midnight |
+| `SUMMARY_COOLDOWN_SEC` | ⚪ No | `300` | Minimum interval between consecutive calls (seconds) to prevent overuse |
 
-## 🤖 AI市场分析
+## 🤖 AI Market Analysis
 
-### 技术实现
+### Technical Implementation
 
-使用 **DeepSeek API**（通过OpenAI兼容SDK）：
-- **API端点**: `https://api.deepseek.com/v1`
-- **模型**: `deepseek-reasoner`
-- **数据来源**: SQLite数据库中最近7天的价格历史
-- **输出格式**: 中文市场点评（150-200字），包含趋势分析、技术指标解读和投资建议
+Using **DeepSeek API** (via OpenAI-compatible SDK):
+- **API Endpoint**: `https://api.deepseek.com/v1`
+- **Model**: `deepseek-reasoner`
+- **Data Source**: Recent 7-day price history from SQLite database
+- **Output Format**: Market commentary (150-200 words) with trend analysis, technical indicator interpretation, and trading recommendations
 
 ### 使用率控制
 
@@ -519,50 +526,50 @@ SUMMARY_COOLDOWN_SEC=300       # 两次调用间隔秒数（默认300=5分钟）
 #### 2️⃣ 每日配额限制
 - 通过 `MAX_CALLS_PER_DAY` 配置（默认：20次/天）
 - 计数器在UTC午夜重置
-- 达到限制时：显示缓存内容 + 等待时间估算
-- 使用数据持久化到 `data/ai_usage.json`
+- When limit reached: display cached content + estimated wait time
+- Usage data persisted to `data/ai_usage.json`
 
-#### 3️⃣ 冷却时间
-- 通过 `SUMMARY_COOLDOWN_SEC` 配置（默认：300秒 = 5分钟）
-- 强制连续调用之间的最小间隔
-- 冷却期间：显示缓存内容 + 剩余等待时间
+#### 3️⃣ Cooldown Period
+- Configured via `SUMMARY_COOLDOWN_SEC` (default: 300 seconds = 5 minutes)
+- Enforces minimum interval between consecutive calls
+- During cooldown: display cached content + remaining wait time
 
-### 用户体验
+### User Experience
 
-**允许调用时**: 生成并显示最新AI分析  
-**限流时**:
-- ✅ 有缓存：显示缓存分析 + 友好提示（如 "冷却中，约 3 分钟后可再刷新"）
-- ❌ 无缓存：显示等待提示（如 "今日 AI 调用次数已用完，请约 5 小时后再试"）
+**When call allowed**: Generate and display latest AI analysis  
+**When rate limited**:
+- ✅ With cache: Show cached analysis + friendly message (e.g., "Cooling down, refresh available in ~3 minutes")
+- ❌ No cache: Show wait message (e.g., "Daily AI quota reached, please try again in ~5 hours")
 
-**手动控制**: 用户需明确点击"🔄 刷新分析"按钮触发AI调用，防止意外使用。
+**Manual control**: User must explicitly click "Refresh Analysis" button to trigger AI call, preventing accidental usage.
 
-## ❓ 常见问题
+## ❓ FAQ
 
-### Q: Dashboard显示"无历史数据"？
-**A:** 需要先填充历史数据：
+### Q: Dashboard shows "No historical data"?
+**A:** You need to fill historical data first:
 ```powershell
 .\fill_history.ps1
 ```
-或手动填充：
+Or manually fill:
 ```powershell
 python fill_history.py --symbol GBPUSD --bars 300
 ```
 
-### Q: 支持哪些交易品种？
-**A:** 当前支持3个品种：
-- GBPUSD（英镑/美元）
-- EURUSD（欧元/美元）  
-- BTCUSD（比特币/美元）
+### Q: Which trading pairs are supported?
+**A:** Currently supports 3 pairs:
+- GBPUSD (British Pound / US Dollar)
+- EURUSD (Euro / US Dollar)  
+- BTCUSD (Bitcoin / US Dollar)
 
-可通过修改 `fetch_data.py` 中的 `SYMBOL_MAP` 添加更多品种。
+You can add more pairs by modifying `SYMBOL_MAP` in `fetch_data.py`.
 
-### Q: 如何修改K线周期？
-**A:** 编辑 `kline_generator.py` 中的启动参数：
+### Q: How to change K-line period?
+**A:** Edit startup parameters in `kline_generator.py`:
 ```python
-# 将5分钟改为15分钟
+# Change from 5 minutes to 15 minutes
 python src/kline_generator.py --kline-interval 900
 ```
-同时需修改 `dashboard/app.py` 中的 `resample_to_low_frequency` 函数。
+Also need to modify `resample_to_low_frequency` function in `dashboard/app.py`.
 
 ### Q: yfinance无法获取数据怎么办？
 **A:** 系统会自动切换到模拟数据生成模式，或手动指定：
@@ -594,70 +601,73 @@ gunicorn -w 4 -b 0.0.0.0:5000 src.api:app
 ```
 Dashboard同样可以用 `gunicorn dashboard.app:server` 部署。
 
-## 🚀 部署
+## 🚀 Deployment
 
-### 本地开发环境
+### Local Development
 ```powershell
 .\start_all.ps1
 ```
 
-### 生产环境（Linux/云服务器）
+### Production (Linux/Cloud Server)
 ```bash
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 启动API
+# Start API
 gunicorn -w 4 -b 0.0.0.0:5000 src.api:app &
 
-# 启动Dashboard
+# Start Dashboard
 gunicorn -w 2 -b 0.0.0.0:8050 dashboard.app:server &
 
-# 启动K线生成器
+# Start K-line generator
 nohup python src/kline_generator.py &
 ```
 
-### Docker部署（未来计划）
-待添加 Dockerfile 和 docker-compose.yml
+### Docker Deployment (Future Plan)
+Dockerfile and docker-compose.yml to be added
 
-## 📝 更新日志
+## 📝 Changelog
 
 **v1.0.0** (2025-11-29)
-- ✅ 完整的K线生成系统（tick采集 → OHLC生成）
-- ✅ 异常值过滤机制
-- ✅ Dash可视化Dashboard
-- ✅ MA7/MA30技术指标
-- ✅ DeepSeek AI市场分析
-- ✅ API使用率控制
-- ✅ 历史数据填充工具
-- ✅ 一键启动脚本
-- ✅ 桌面快捷方式
+- ✅ Complete K-line generation system (tick collection → OHLC generation)
+- ✅ Anomaly filtering mechanism
+- ✅ Dash visualization Dashboard
+- ✅ MA7/MA30 technical indicators
+- ✅ DeepSeek AI market analysis
+- ✅ API usage rate control
+- ✅ Historical data fill tool
+- ✅ One-click startup script
+- ✅ Desktop shortcuts
+- ✅ Risk engine with volatility analysis and anomaly detection
+- ✅ Real-time risk monitoring panel with alert banners
+- ✅ Database backup and health check utilities
 
-## 📜 许可证
+## 📜 License
 
-本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
+This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
-## 👤 作者
+## 👤 Author
 
 **Leo666xx**
 
 - GitHub: [@Leo666xx](https://github.com/Leo666xx)
-- 项目地址: https://github.com/Leo666xx/financial-data-pipeline
+- Project URL: https://github.com/Leo666xx/financial-data-pipeline
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-## 📞 支持
+## 📞 Support
 
-如有问题，请在 GitHub 上提交 Issue。
+For questions or issues, please submit an Issue on GitHub.
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-- [yfinance](https://github.com/ranaroussi/yfinance) - Yahoo Finance数据源
-- [Dash](https://dash.plotly.com/) - 交互式可视化框架
-- [DeepSeek](https://platform.deepseek.com) - AI API服务
+- [yfinance](https://github.com/ranaroussi/yfinance) - Yahoo Finance data source
+- [Dash](https://dash.plotly.com/) - Interactive visualization framework
+- [DeepSeek](https://platform.deepseek.com) - AI API service
 
 ---
 
-**最后更新:** 2025-11-29  
-**版本:** 1.0.0
+**Last Updated:** 2025-11-30  
+**Version:** 1.0.0

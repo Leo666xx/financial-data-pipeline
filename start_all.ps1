@@ -16,9 +16,14 @@ if (-not (Test-Path $pythonExe)) {
     exit 1
 }
 
-# Step 1: Clear old data
-Write-Host "Step 1/5: Clearing old price data..." -ForegroundColor Yellow
-& $pythonExe "src\database.py" "clear"
+# Step 1: Check database (no auto-clear)
+Write-Host "Step 1/5: Checking database..." -ForegroundColor Yellow
+if (Test-Path "data\market.db") {
+    $dbSize = (Get-Item "data\market.db").Length
+    Write-Host "[OK] Database found ($('{0:N0}' -f $dbSize) bytes)" -ForegroundColor Green
+} else {
+    Write-Host "[WARN] Database not found, will be created" -ForegroundColor Yellow
+}
 Write-Host ""
 
 # Step 2: Start K-line generator (background)
