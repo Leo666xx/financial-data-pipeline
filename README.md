@@ -34,6 +34,27 @@ A comprehensive financial data analysis system with real-time data collection, K
 - EUR/USD (Euro / US Dollar)
 - BTC/USD (Bitcoin / US Dollar)
 
+## 🔄 Auto-Update
+
+The system can automatically check for updates from GitHub and restart services.
+
+**One-time Setup:**
+```powershell
+.\setup_auto_update.ps1
+```
+
+This creates a scheduled task that checks for updates every 6 hours.
+
+**Manual Update:**
+```powershell
+.\auto_update.ps1
+```
+
+**Disable Auto-Update:**
+```powershell
+Disable-ScheduledTask -TaskName "FinancialDashboard_AutoUpdate"
+```
+
 ## 🔐 Security - API Key Setup
 
 ### ⚠️ Important: Never commit your API keys to Git!
