@@ -226,33 +226,33 @@ Collect tick every 5 seconds → Accumulate into 5-minute bucket → Generate OH
 
 For detailed explanation, see [KLINE_GUIDE.md](KLINE_GUIDE.md)
 
-### 🛡️ 风险引擎 (Risk Engine)
+### 🛡️ Risk Engine
 
-**核心功能：**
-1. **滚动标准差异常检测** - 基于20周期滚动窗口，检测价格异常波动
-2. **波动率分析** - 计算当前波动率、平均波动率、百分位排名
-3. **Z-score异常检测** - 标准化价格偏离度，阈值2.5倍标准差
-4. **风险等级评估** - 5级评分系统（极低/低/中/高/严重）
-5. **风险信号生成** - 自动生成风险警告和操作建议
+**Core Features:**
+1. **Rolling Standard Deviation Anomaly Detection** - Based on 20-period rolling window, detects abnormal price fluctuations
+2. **Volatility Analysis** - Calculates current volatility, average volatility, percentile ranking
+3. **Z-score Anomaly Detection** - Standardized price deviation, threshold 2.5 standard deviations
+4. **Risk Level Assessment** - 5-level scoring system (Minimal/Low/Medium/High/Critical)
+5. **Risk Signal Generation** - Automatically generates risk warnings and trading recommendations
 
-**风险指标：**
-- **风险评分**：0-100分综合评分
-  - 0-10: 极低风险 🟢
-  - 10-30: 低风险 🟡
-  - 30-50: 中等风险 🟠
-  - 50-70: 高风险 🔴
-  - 70+: 严重风险 🚨
+**Risk Indicators:**
+- **Risk Score**: 0-100 composite score
+  - 0-10: Minimal Risk 🟢
+  - 10-30: Low Risk 🟡
+  - 30-50: Medium Risk 🟠
+  - 50-70: High Risk 🔴
+  - 70+: Critical Risk 🚨
 
-- **波动率分析**：
-  - 当前波动率（基于收益率标准差）
-  - 历史平均波动率
-  - 波动率百分位（在历史分布中的位置）
-  - 高波动率警告（阈值：1.5%）
+- **Volatility Analysis**:
+  - Current volatility (based on return standard deviation)
+  - Historical average volatility
+  - Volatility percentile (position in historical distribution)
+  - High volatility alert (threshold: 1.5%)
 
-- **异常检测**：
-  - Z-score偏离度（标准化偏离指标）
-  - 异常点计数（超过2.5倍标准差）
-  - 异常价格列表
+- **Anomaly Detection**:
+  - Z-score deviation (standardized deviation indicator)
+  - Anomaly count (exceeding 2.5 standard deviations)
+  - Anomalous price list
 
 **Using Risk Engine:**
 
@@ -281,13 +281,13 @@ print(f"Risk Score: {report['summary']['risk_score']}/100")
 
 ## 📡 API Documentation
 
-### 1. 健康检查
+### 1. Health Check
 
 ```http
 GET http://localhost:5000/
 ```
 
-**返回示例:**
+**Response Example:**
 ```json
 {
   "message": "Hello — Flask API is running!",
@@ -295,13 +295,13 @@ GET http://localhost:5000/
 }
 ```
 
-### 2. 获取最新价格
+### 2. Get Latest Price
 
 ```http
 GET http://localhost:5000/price?symbol=GBPUSD
 ```
 
-**返回示例:**
+**Response Example:**
 ```json
 {
   "symbol": "GBPUSD",
@@ -310,17 +310,17 @@ GET http://localhost:5000/price?symbol=GBPUSD
 }
 ```
 
-### 3. 获取历史数据
+### 3. Get Historical Data
 
 ```http
 GET http://localhost:5000/history?symbol=GBPUSD&limit=300
 ```
 
-**参数:**
-- `symbol`: 交易品种（GBPUSD/EURUSD/BTCUSD）
-- `limit`: 返回数据条数（可选，默认500）
+**Parameters:**
+- `symbol`: Trading pair (GBPUSD/EURUSD/BTCUSD)
+- `limit`: Number of records to return (optional, default 500)
 
-**返回示例:**
+**Response Example:**
 ```json
 {
   "symbol": "GBPUSD",
@@ -360,13 +360,13 @@ ON prices(symbol, timestamp);
 
 ### Tech Stack
 
-- **Flask 2.3+** - 轻量级Web框架
-- **Dash >=2.15** - 交互式数据可视化
-- **Plotly** - 图表库
-- **yfinance** - Yahoo Finance数据源
-- **SQLite3** - 嵌入式数据库
-- **OpenAI SDK** - DeepSeek API客户端
-- **python-dotenv** - 环境变量管理
+- **Flask 2.3+** - Lightweight web framework
+- **Dash >=2.15** - Interactive data visualization
+- **Plotly** - Chart library
+- **yfinance** - Yahoo Finance data source
+- **SQLite3** - Embedded database
+- **OpenAI SDK** - DeepSeek API client
+- **python-dotenv** - Environment variable management
 
 ### Core Modules
 
@@ -514,18 +514,18 @@ Using **DeepSeek API** (via OpenAI-compatible SDK):
 - **Data Source**: Recent 7-day price history from SQLite database
 - **Output Format**: Market commentary (150-200 words) with trend analysis, technical indicator interpretation, and trading recommendations
 
-### 使用率控制
+### Usage Rate Control
 
-为降低API成本并防止配额耗尽，实现了**三层保护机制**：
+To reduce API costs and prevent quota exhaustion, implemented **three-layer protection**:
 
-#### 1️⃣ 客户端缓存（30分钟）
-- AI分析结果在Dashboard中缓存30分钟
-- 自动刷新页面时使用缓存，无需调用API
-- 需手动点击"刷新分析"按钮绕过缓存
+#### 1️⃣ Client-Side Caching (30 minutes)
+- AI analysis results cached in Dashboard for 30 minutes
+- Automatic page refreshes use cache without API calls
+- Manual "Refresh Analysis" button required to bypass cache
 
-#### 2️⃣ 每日配额限制
-- 通过 `MAX_CALLS_PER_DAY` 配置（默认：20次/天）
-- 计数器在UTC午夜重置
+#### 2️⃣ Daily Quota Limit
+- Configured via `MAX_CALLS_PER_DAY` (default: 20 calls/day)
+- Counter resets at UTC midnight
 - When limit reached: display cached content + estimated wait time
 - Usage data persisted to `data/ai_usage.json`
 
@@ -571,35 +571,35 @@ python src/kline_generator.py --kline-interval 900
 ```
 Also need to modify `resample_to_low_frequency` function in `dashboard/app.py`.
 
-### Q: yfinance无法获取数据怎么办？
-**A:** 系统会自动切换到模拟数据生成模式，或手动指定：
+### Q: What if yfinance cannot fetch data?
+**A:** System will automatically switch to simulated data generation mode, or manually specify:
 ```powershell
 python fill_history.py --symbol GBPUSD --bars 300 --simulated
 ```
 
-### Q: AI分析提示"余额不足"？
-**A:** 需要为DeepSeek账户充值，或暂时关闭AI功能（Dashboard仍可正常显示图表）。
+### Q: AI analysis shows "Insufficient balance"?
+**A:** Need to top up DeepSeek account, or temporarily disable AI feature (Dashboard will still display charts normally).
 
-### Q: 如何清空数据库重新开始？
-**A:** 使用数据库清理工具：
+### Q: How to clear database and start fresh?
+**A:** Use database cleanup tool:
 ```powershell
-# 清空所有数据
+# Clear all data
 python src/database.py clear
 
-# 或使用交互式脚本
+# Or use interactive script
 .\clean_database.ps1
 ```
 
-### Q: 数据多久更新一次？
-**A:** K线生成器每5秒采集一次tick，每5分钟生成一根K线。Dashboard可手动点击"刷新数据"获取最新数据。
+### Q: How often does data update?
+**A:** K-line generator collects ticks every 5 seconds and generates one K-line every 5 minutes. Dashboard can manually click "Refresh Data" to get latest data.
 
-### Q: 可以部署到服务器吗？
-**A:** 可以。推荐使用Gunicorn部署Flask API：
+### Q: Can it be deployed to a server?
+**A:** Yes. Recommended to use Gunicorn for Flask API deployment:
 ```bash
 pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 src.api:app
 ```
-Dashboard同样可以用 `gunicorn dashboard.app:server` 部署。
+Dashboard can also be deployed with `gunicorn dashboard.app:server`.
 
 ## 🚀 Deployment
 
