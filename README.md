@@ -34,6 +34,73 @@ A comprehensive financial data analysis system with real-time data collection, K
 - EUR/USD (Euro / US Dollar)
 - BTC/USD (Bitcoin / US Dollar)
 
+## 🚀 Quick Start Options
+
+### Option 1: Desktop Shortcut (Manual Start)
+Double-click the "Financial Dashboard" shortcut on your desktop to start all services and open the browser.
+
+### Option 2: Background Service (Auto-Start on Boot) ⭐ Recommended
+Install as a Windows service that starts automatically on boot:
+
+```powershell
+.\install_service.ps1
+```
+
+**Benefits:**
+- ✅ Auto-starts when Windows boots
+- ✅ Just open browser and go to http://localhost:8050
+- ✅ No need to click anything
+- ✅ Runs silently in background
+- ✅ Auto-restarts if crashes
+
+**To uninstall service:**
+```powershell
+.\uninstall_service.ps1
+```
+
+## 🌐 Network Access - Share Dashboard with Others
+
+The dashboard can be accessed by other devices on your network (phones, tablets, other computers).
+
+### Setup Network Access (One-Time)
+
+**Run as Administrator:**
+```powershell
+.\setup_network_access.ps1
+```
+
+This will:
+- Configure Windows Firewall to allow access
+- Display your network URL (e.g., `http://192.168.1.100:8050`)
+- Copy the URL to clipboard for easy sharing
+
+### Access from Other Devices
+
+1. **On this computer:** Start the dashboard service
+   ```powershell
+   .\install_service.ps1  # Auto-start on boot
+   # OR
+   # Double-click desktop shortcut
+   ```
+
+2. **On other devices:** Open browser and go to the network URL
+   ```
+   http://YOUR_IP:8050
+   ```
+   Replace `YOUR_IP` with the address shown by setup_network_access.ps1
+
+### Features for Network Access
+- ✅ **Auto-refreshes every 5 seconds** - no manual refresh needed
+- ✅ **Multiple users** can view simultaneously
+- ✅ **Real-time updates** - everyone sees the same live data
+- ✅ **Works on phones/tablets** - responsive design
+- ✅ **No installation needed** on client devices - just open browser
+
+### Network Requirements
+- All devices must be on the same WiFi/LAN network
+- Dashboard service must be running on host computer
+- Windows Firewall configured (done by setup script)
+
 ## 🔄 Auto-Update Features
 
 ### Dashboard Real-Time Auto-Refresh

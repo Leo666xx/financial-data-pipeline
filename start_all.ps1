@@ -1,6 +1,11 @@
 # All-in-One Startup Script for Financial Dashboard System
 # Auto-start: K-line Generator -> API -> Dashboard -> Browser
 
+# Check if running as background service
+param(
+    [switch]$ServiceMode
+)
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Financial Dashboard - Complete System" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
@@ -80,11 +85,13 @@ Write-Host ""
 Write-Host "Waiting for Dashboard to be ready..." -ForegroundColor Yellow
 Start-Sleep -Seconds 5
 
-# Step 5: Open browser
-Write-Host ""
-Write-Host "Step 5/5: Opening browser..." -ForegroundColor Yellow
-Start-Process "http://localhost:8050"
-Write-Host "[OK] Browser opened" -ForegroundColor Green
+# Step 5: Open browser (skip in service mode)
+if (-not $ServiceMode) {
+    Write-Host ""
+    Write-Host "Step 5/5: Opening browser..." -ForegroundColor Yellow
+    Start-Process "http://localhost:8050"
+    Write-Host "[OK] Browser opened" -ForegroundColor Green
+}
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
@@ -99,11 +106,18 @@ Write-Host ""
 Write-Host "Data Flow:" -ForegroundColor White
 Write-Host "  Tick (5s) -> K-line (5min) -> Database -> Dashboard" -ForegroundColor Gray
 Write-Host ""
-Write-Host "IMPORTANT:" -ForegroundColor Yellow
-Write-Host "  - K-line generator window shows live tick data" -ForegroundColor White
-Write-Host "  - API and Dashboard run in background (minimized)" -ForegroundColor White
-Write-Host "  - To stop all services, run: .\stop_all.ps1" -ForegroundColor White
-Write-Host "  - Or close K-line window and run stop_all.ps1" -ForegroundColor White
-Write-Host ""
-Write-Host "Press Enter to close this window..." -ForegroundColor Cyan
-Read-Host
+
+if (-not $ServiceMode) {
+    Write-Host "IMPORTANT:" -ForegroundColor Yellow
+    Write-Host "  - K-line generator window shows live tick data" -ForegroundColor White
+    Write-Host "  - API and Dashboard run in background (minimized)" -ForegroundColor White
+    Write-Host "  - To stop all services, run: .\stop_all.ps1" -ForegroundColor White
+    Write-Host "  - Or close K-line window and run stop_all.ps1" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Press Enter to close this window..." -ForegroundColor Cyan
+    Read-Host
+} else {
+    Write-Host "Running in service mode - access at http://localhost:8050" -ForegroundColor Cyan
+    Write-Host "Services will continue running in background..." -ForegroundColor Gray
+    Write-Host ""
+}
